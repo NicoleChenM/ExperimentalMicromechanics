@@ -1,5 +1,5 @@
 test:doctest:
     image: python:3.6
     script:
-        - pip install numpy matplotlib scipy
+        - pip install numpy matplotlib scipy PIL skimage xml cv2
         - python -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
