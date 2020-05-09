@@ -1,0 +1,84 @@
+/** \file
+\brief Class to allow for read confocal and AFM data using python
+
+\section overview Overview
+ Class to allow for TIF image loading and enhancing using python
+ - read multiple kinds of TIFs
+ - incl. reading keys out of Zeiss TIF image:
+ - incl. reading keys out of NPVE images
+
+\section ex1 Example: Zeiss file
+Read, get meta-information, enhance contrast, add scale-bar, show and save
+\verbatim
+>>> from pprint import pprint
+>>> from Tif import Tif
+>>> image = Tif("Examples/Tif/Zeiss.tif")
+>>> image.show()                       #doctest: +SKIP
+>>> pprint(image.meta)                 #doctest: +SKIP
+>>> image.hist()                       # check history
+>>> image.enhance()                    # use automatic contrast change
+>>> image.show()
+>>> image.findScaleBar(10)             # can be skipped for automatic
+Scale bar length= 10   and in pixel= 63
+>>> image.addScaleBar()
+Scale used 64.0
+>>> image.show()                       #doctest: +SKIP
+>>> image.save()                       #doctest: +SKIP
+
+\endverbatim
+Advanced contrast changes
+\verbatim
+>>> image.reset()                      # do not like automatic contrast change, revert
+>>> image.contrast(2,0.25,plot=True)   # check manual curve, no change
+>>> image.contrast(2,0.25)             # apply manual curve
+>>> image.show()                       #doctest: +SKIP
+
+\endverbatim
+
+
+
+#############################
+## Example: Read Tif file from Imagic ImageAccess:
+image was taken with maginification = 5, which relates to a pixel size of 0.1um
+------------------------------
+\verbatim
+>>> from Tif import Tif
+>>> image = Tif("Examples/Tif/ImageAccess.tif",pixelSize=0.1)
+>>> image.addScaleBar()
+>>> image.show()                        #doctest: +SKIP
+\endverbatim
+
+
+#############################
+## Example: Read Tif file Fibics NPVE
+------------------------------
+\verbatim
+>>> from Tif import Tif
+>>> i = Tif("Examples/Tif/NPVE.tif","NPVE")   # giving the type (NPVE), speeds up things
+Picture width 83.227712427205 [um]
+Pixel size 0.004000178430606797 [um]
+widthPixel 20806
+>>> i.addScaleBar()                 # scale bar is created
+>>> i.show()
+\endverbatim
+
+
+#############################
+## Example: Read Zeiss-Tif and correct curtains produced by FIB
+------------------------------
+\verbatim
+>>> from Tif import Tif
+>>> i = Tif('Examples/Tif/FibCurtains.tif')
+>>> i.addScaleBar()                 # scale bar is created
+>>> i.show()
+>>> i.crop(yMax=680)
+After cropping: new size of image:  1024 680
+>>> i.contrast(magnitude=5)
+>>> i.show()                                #doctest: +SKIP
+>>> i.medianFilter(2)
+>>> i.filterCurtain(xmin=10, xmax=100, ymax=3)  #first try
+>>> i.filterCurtain(xmin=10, xmax=100, ymax=3, save=True)
+>>> i.show()                                #doctest: +SKIP
+\endverbatim
+
+**/
