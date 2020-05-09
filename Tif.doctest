@@ -7,13 +7,15 @@
  - incl. reading keys out of Zeiss TIF image:
  - incl. reading keys out of NPVE images
 
-\section ex1 Example: Zeiss file
+Example: Zeiss file
+====================================
 - read file
 - get meta-information
 - check histogram of grayscale
 - enhance contrast
 - add scale-bar
 - show and save
+
 \verbatim
 >>> from pprint import pprint
 >>> from Tif import Tif
@@ -41,12 +43,9 @@ Advanced contrast changes:
 
 \endverbatim
 
-
-
-#############################
-## Example: Read Tif file from Imagic ImageAccess:
+Example: Read Tif file from Imagic ImageAccess:
+====================================
 image was taken with maginification = 5, which relates to a pixel size of 0.1um
-------------------------------
 \verbatim
 >>> from Tif import Tif
 >>> image = Tif("Examples/Tif/ImageAccess.tif",pixelSize=0.1)
@@ -57,10 +56,8 @@ image was taken with maginification = 5, which relates to a pixel size of 0.1um
 >>> image.show()                        #doctest: +SKIP
 \endverbatim
 
-
-#############################
-## Example: Read Tif file Fibics NPVE
-------------------------------
+Example: Read Tif file Fibics NPVE
+====================================
 Not automatically tested since it breaks the gitlab-server.
 \verbatim
 > from Tif import Tif
@@ -73,9 +70,8 @@ widthPixel 20806
 \endverbatim
 
 
-#############################
-## Example: Read Zeiss-Tif and correct curtains produced by FIB
-------------------------------
+Example: Read Zeiss-Tif and correct curtains produced by FIB
+====================================
 \verbatim
 >>> from Tif import Tif
 >>> i = Tif('Examples/Tif/FibCurtains.tif')

@@ -3,3 +3,16 @@ test:doctest:
     script:
         - pip install numpy matplotlib scipy Pillow scikit-image opencv-python
         - python -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
+
+pages:doxygen:
+    image: python:3.6
+    script:
+        - apk update
+        - apk add doxygen
+        - python buildDoxy.py
+        - doxygen doxygen/Doxyfile
+    artifacts:
+      paths:
+        - public
+    only:
+      - master

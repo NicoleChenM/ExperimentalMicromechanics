@@ -1,0 +1,27 @@
+/** \file
+ *  \brief General information, start-up page
+    \page main General information, start-up page
+    \tableofcontents
+\mainpage Python for Experimental Micromechanics
+
+\section sem SEM images
+- Examples: \ref Tif.doxy
+- Documentation: Tif.Tif
+
+\section nanoindentation Nanoindentation
+To be published later
+
+\section contact Contact information
+
+    Dr. Steffen Brinckmann
+    Micromechanics and Tribology
+    Microstructure and Properties of Materials (IEK-2)
+    Forschungszentrum Jülich
+    Tel.: +49 2461 61-4425
+
+\section wishlist Wishlist
+I would like to get more image formats included
+
+
+
+*/

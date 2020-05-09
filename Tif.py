@@ -486,6 +486,7 @@ class Tif:
        magnitude: curve curvature \image html figZeiss1.png
        offset: move neutral point up-down diagonal \image html figZeiss2.png
        yoffset: move neutral point up-down \image html figZeiss3.png
+       save: save resulting contrast change
        plot: plot the desired curve on the screen, no contrast changes are performed to the image.<br>
              this is to verify ones choice
        points: smoothness of curve, the more the smoother
