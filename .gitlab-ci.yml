@@ -5,7 +5,7 @@ test:doctest:
         - python -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
 
 pages:doxygen:
-    image: python:3.6
+    image: alpine
     script:
         - apk update
         - apk add doxygen
