@@ -1,4 +1,5 @@
 test:doctest:
     image: python:3.6
     script:
-        - python -m doctest -v Tif.doctest
+        - pip install numpy matplotlib scipy
+        - python -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
