@@ -61,14 +61,15 @@ image was taken with maginification = 5, which relates to a pixel size of 0.1um
 #############################
 ## Example: Read Tif file Fibics NPVE
 ------------------------------
+Not automatically tested since it breaks the gitlab-server.
 \verbatim
->>> from Tif import Tif
->>> i = Tif("Examples/Tif/NPVE.tif","NPVE")   # giving the type (NPVE), speeds up things
+> from Tif import Tif
+> i = Tif("Examples/Tif/NPVE.tif","NPVE")   # giving the type (NPVE), speeds up things
 Picture width 83.227712427205 [um]
 Pixel size 0.004000178430606797 [um]
 widthPixel 20806
->>> i.addScaleBar()                 # scale bar is created
->>> i.show()                        #doctest: +SKIP
+> i.addScaleBar()                 # scale bar is created
+> i.show()                        #doctest: +SKIP
 \endverbatim
 
 
