@@ -9,7 +9,7 @@ pages:doxygen:
     script:
         - apk update
         - apk add doxygen
-        - python buildDoxy.py
+        - python doxygen/buildDoxy.py
         - doxygen doxygen/Doxyfile
     artifacts:
       paths:
