@@ -1,0 +1,498 @@
+/** \file
+\brief Tutorials for nanoindentation analysis
+
+\section overviewIndent Overview
+UNITS: one HAS TO use units: [mN], [um], [GPa] (force, length, stress)
+in this code (any nanoindentation code), since the area function is unit-dependent
+
+\section tutorialsBasic Basic tutorials for G200 and Hysitron
+\subsection exampleBasic1: Example: Agilent G200 file and ISO testing method
+\verbatim
+>>> from nanoIndent import Tip, Indentation
+>>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
+>>> i = Indentation("Examples/Agilent/ISO.xls", tip)     
+=============  Examples/Agilent/ISO.xls  ============
+     Displacement Into Surface      : h                    
+     Load On Sample                 : p                    
+     Time On Sample                 : t                    
+     Stiffness                      : slope                
+     Modulus                        : modulus              
+     Hardness                       : hardness             
+     Contact Area                   : A_c                  
+     Contact Depth                  : h_c                  
+ *** Abs Val dPdt                   NOT USED
+ *** dPdt                           NOT USED
+     Frame Stiffness                : frameStiffness
+     Load vs Disp Slope             : pVsHSlope
+ *** Max Load                       NOT USED
+ *** Points In Stiffness Fit        NOT USED
+     Raw Displacement               : hRaw                 
+     Raw Load                       : pRaw                 
+     Reduced Modulus                : modulusRed           
+ *** Segment Number                 NOT USED
+ *** Segment Type                   NOT USED
+     Stiffness Squared Over Load    : k2p                  
+     Support Spring Stiffness       : slopeSupport         
+     Time                           : tTotal               
+     X Position                     : xCoarse              
+     Y Position                     : yCoarse
+>>> i.nuMat = 0.2
+>>> i.plot()                                        #doctest: +SKIP
+>>> i.verifyReadCalc(plot=False)
+Error in hc: 0.000e+00 % between 3.365e-01 and 3.365e-01
+Error in Ac: 9.976e-04 % between 2.916e+00 and 2.916e+00
+Error in E*: 4.988e-04 % between 1.206e+02 and 1.206e+02
+Error in E:  1.087e-02 % between 1.294e+02 and 1.294e+02
+Error in H:  9.976e-04 % between 6.890e+00 and 6.890e+00
+>>> #calculate stiffness for single point and compare with reference
+>>> S,_,_,_ = i.stiffnessFromUnloading(i.p, i.h, plot=False)
+Number of unloading segments: 1
+>>> print("Error: %.2e"%((i.slope[0] - S[0])/S[0]))
+Error: -3.23e-04
+
+\endverbatim
+- error is <<1%; errors are small compared to the values itself
+- plot=True, will give more information on plotting
+
+Please note:
+- no data collected during drift segment (only at the start and end)
+- in Examples there is the method-file to every Agilent file. Agilent file gives data, Method file tip calibration
+
+Information on the tip can be obtained by:
+- Tip->Print preview of configuration: that data does include a wrong/imcomplete compliance
+- Method->Print Preview->Detailed: there is a "Indenter Tip" section, which gives the correct data
+
+
+\subsection exampleBasic2: Example: Hysitron HLD file and ISO testing method
+\verbatim
+>>> from nanoIndent import Tip, Indentation
+>>> i = Indentation("Examples/Hysitron/Exp-10mN_0000.hld")      #tip data stored in file
+=============  Examples/Hysitron/Exp-10mN_0000.hld  ============
+>>> i.updateSlopes()                                            #data reading (command before), separeted from calculation to allow for adoptation of nu inbetween
+Number of unloading segments: 1
+>>> i.plot()                                                    #doctest: +SKIP
+>>> i.verifyReadCalc(plot=False)  #possible but senseless since hC,E data not in file
+Error in hc: 0.000e+00 % between 1.299e-01 and 1.299e-01
+Error in Ac: 0.000e+00 % between 4.375e-01 and 4.375e-01
+Error in E*: 0.000e+00 % between 1.763e+02 and 1.763e+02
+Error in E:  0.000e+00 % between 1.896e+02 and 1.896e+02
+Error in H:  0.000e+00 % between 2.313e+01 and 2.313e+01
+
+\endverbatim
+
+\subsection exampleBasic2b: Example: Hysitron TXT file and ISO testing method
+area function = 24.5, -3.7003e1, 5.2827e4, -2.8535e5, 4.8121e5, -2.4060e5
+compliance = 3,42 nm/mN.....t = Tip(compliance=3.42/1e3)
+\verbatim
+>>> from nanoIndent import Tip, Indentation
+>>> i = Indentation("Examples/Hysitron/RobinSteel0000LC.txt")      #tip data NOT stored in file
+=============  Examples/Hysitron/RobinSteel0000LC.txt  ============
+>>> i.updateSlopes()
+Number of unloading segments: 1
+>>> i.plot()                                                    #doctest: +SKIP
+\endverbatim
+
+\subsection exampleBasic3: Example: Hysitron file and multiple unloading method
+\verbatim
+>>> from nanoIndent import Tip, Indentation
+>>> i = Indentation("Examples/Hysitron/100mN01_TipAreaFunction_before.hld")     #tip data stored in file
+=============  Examples/Hysitron/100mN01_TipAreaFunction_before.hld  ============
+>>> i.updateSlopes()
+Number of unloading segments: 20
+>>> i.plot()                                                    #doctest: +SKIP
+>>> i.plotAsDepth("Ered")                                       #doctest: +SKIP  
+
+\endverbatim
+
+\subsection exampleBasic4: Example: Test default Agilent file with CSM method
+\verbatim
+>>> from nanoIndent import Tip, Indentation
+>>> tip = Tip([0.0000e+000, 4.6312e+003, -1.2843e+004, -5.5198e+004, 7.4892e+004,"iso" ], 1000.0/-1733152.4249 )
+***Warning: stiffness outside domain 1e5...1e10 N/m: -1733152
+>>> i   = Indentation("Examples/Agilent/CSM.xls",tip)
+=============  Examples/Agilent/CSM.xls  ============
+*** Segment                        NOT USED
+    Displacement Into Surface      : h                    
+    Load On Sample                 : p                    
+    Time On Sample                 : t                    
+    Harmonic Contact Stiffness     : slope                
+    Hardness                       : hardness             
+    Modulus                        : modulus              
+    Contact Area                   : A_c                  
+    Contact Depth                  : h_c                  
+*** CSM Status                     NOT USED
+    Harmonic Displacement          : hHarmonic            
+*** Harmonic Frequency             NOT USED
+    Harmonic Load                  : pHarmonic            
+    Harmonic Stiffness             : slopeInvalid         
+    Load vs Disp Slope             : pVsHSlope            
+    Phase Angle                    : phaseAngle           
+    Raw Displacement               : hRaw                 
+    Raw Load                       : pRaw                 
+    Reduced Modulus                : modulusRed           
+    Stiffness Squared Over Load    : k2p                  
+    Support Spring Stiffness       : slopeSupport         
+    Time                           : tTotal               
+    X Position                     : xCoarse              
+    Y Position                     : yCoarse              
+>>> i.nuMat = 0.3
+>>> i.plotTestingMethod()               #can be used for all        #doctest: +SKIP
+>>> i.plot()                            #CSM: no unloading is plotted    #doctest: +SKIP   
+>>> i.verifyReadCalc(plot=False)
+Error in hc: 6.55e-16
+Error in Ac: 3.38e-04
+Error in E*: 1.87e-01
+Error in E: 1.82e+00
+Error in H: 2.64e-02
+
+\endverbatim
+- and repeat this for all sheets in the excel file, by executing i.nextTest and i.compareReadCalc again
+- Allow plotting in verifyReadCalc by omiting plot=False
+
+To plot an individual file, one can use:
+\verbatim
+\endverbatim
+
+
+\subsection exampleBasicPopin Example: Read G200 data and determine pop-in
+\verbatim
+>>> from nanoIndent import Indentation
+>>> i = Indentation("Examples/Agilent/Popin.xls")             
+=============  Examples/Agilent/Popin.xls  ============
+ *** Segment                        NOT USED
+     Displacement Into Surface      : h                    
+     Load On Sample                 : p                    
+     Time On Sample                 : t                    
+     Harmonic Contact Stiffness     : slope                
+     Hardness                       : hardness             
+     Modulus                        : modulus
+No hold or unloading segments
+>>> while(len(i.testList)>0):
+...   fPopIn, certainty = i.popIn(plot=False)
+...   print(round(fPopIn,3),round(certainty["deltaSlope"],1))
+...   i.nextTest() 
+0.346 14.7
+No hold or unloading segments
+0.389 13.6
+No hold or unloading segments
+0.352 12.2
+No hold or unloading segments
+0.358 13.1
+No hold or unloading segments
+0.215 11.9
+No hold or unloading segments
+0.38 12.5
+No hold or unloading segments
+0.464 13.7
+No hold or unloading segments
+0.341 -1.0
+No hold or unloading segments
+0.537 18.5
+No hold or unloading segments
+0.229 11.7
+No hold or unloading segments
+0.537 17.6
+No hold or unloading segments
+
+\endverbatim
+One value has a negative difference in slope and is not dependable. Use plt.plot to plot the functions.
+
+
+
+\section Verification Short verification methods of Oliver-Pharr Method
+in addition to the ones mentioned before
+\subsection example5 Example: Verify methods
+By comparison to agilent evaluation
+\verbatim
+>>> from nanoIndent import Indentation
+>>> i = Indentation("")
+>>> i.verifyOneData()
+Test CSM method, and area functions (normal and inverse)
+   Set Poisson's ratio 0.35
+   From Agilent software
+      harmStiff   = 159111.704268288 N/m
+      load        = 0.49129786514433 mN
+      totalDepth  = 111.901346020458 nm
+      H           = 0.82150309678705 GPa
+      E           = 190.257729329881 GPa
+      redE        = 182.338858733495 GPa
+      Stiffness Squared Over Load=51529.9093101531 GPa
+      ContactArea = 598047.490101769 nm^2
+   Evaluated by this python method
+      reducedModulus [GPa] = 182.338841153   with error= [ -9.64173539e-08]
+      ContactArea    [um2] = 0.598047605426   with error= [  1.92834735e-19]
+      Youngs Modulus [GPa] = 190.289271054   with error= [ 0.00016578]
+      By using inverse methods: total depth h= 0.11117245742 [um]  with error= -6.24155844435e-16
+End Test
+>>> i.verifyOneData1()
+Test CSM method, and area functions (normal and inverse)
+    Set Poisson's ratio 0.18
+    From Agilent software
+        harmContactStiff = 25731.8375827836 N/m
+        load             = 0.987624311132669 mN
+        totalDepth       = 88.2388854303261 nm
+        H           = 10.0514655820034 GPa
+        E           = 75.1620054287519 GPa
+        Stiffness Squared Over Load=670.424429535749 GPa
+        Youngs Modulus [GPa] = [ 75.16652115]   with error= [  6.00798566e-05]
+        By using inverse methods: total depth h= 0.0882388854304 [um]  with error= 1.03565715125e-12
+End Test
+
+\endverbatim
+
+
+
+
+\section tutorialsHysitron Some Hysitron examples and thoughts/lessons learned
+\subsection exampleHy01: Example: loop through all Hysitron files in this directory and report all results to excel output
+and comparison to the once given by Hysitron
+\verbatim
+>>> import os                                                                                            
+>>> import pandas as pd
+>>> import numpy as np
+>>> from nanoIndent import Indentation
+>>> dfAll = pd.DataFrame()                                                                                             
+>>> for fileName in os.listdir("Examples/Hysitron"):
+...   if not fileName.startswith("Exp-"): continue
+...   i = Indentation("Examples/Hysitron/"+fileName)
+...   i.updateSlopes()
+...   df = i.getResults()
+...   dfAll = dfAll.append(df)
+=============  Examples/Hysitron/Exp-50mN_0000.hld  ============
+Number of unloading segments: 1
+=============  Examples/Hysitron/Exp-20mN_0000.hld  ============
+Number of unloading segments: 1
+=============  Examples/Hysitron/Exp-5mN_0000.hld  ============
+Number of unloading segments: 1
+=============  Examples/Hysitron/Exp-10mN_0000.hld  ============
+Number of unloading segments: 1
+>>> dfAll.to_excel("doctest.xls")
+>>> dfHysitron = pd.read_csv("Examples/Hysitron/Summary.txt",delimiter="\t", encoding='iso-8859-1', skiprows=1,index_col=0)
+>>> del dfHysitron['A'],dfHysitron['m'], dfHysitron['hf(nm)'], dfHysitron['X(mm)'], dfHysitron['Y(mm)'], dfHysitron['heff(nm)']
+>>> del dfAll['method'], dfAll['timeStamp'], dfAll['segment'], dfAll['E_GPa']
+>>> dfAll = dfAll.rename({"Examples/Hysitron/Exp-10mN_0000.hld":"Exp-10mN_0000.hld","Examples/Hysitron/Exp-20mN_0000.hld":"Exp-20mN_0000.hld","Examples/Hysitron/Exp-50mN_0000.hld":"Exp-50mN_0000.hld","Examples/Hysitron/Exp-5mN_0000.hld":"Exp-5mN_0000.hld"}, axis='index')
+>>> dfBoth = pd.concat([dfAll,dfHysitron], axis=1, sort=True)
+>>> dfBoth = dfBoth.drop("Exp-5mN_0000.hld")
+>>> print ("Error in drift: %.2e%%"%np.linalg.norm ( (dfBoth['drift_um/s']*1e3-dfBoth['Drift(nm/s)'])/dfBoth['Drift(nm/s)']*100. ) )
+Error in drift: 2.08e-14%
+>>> print ("Error in pMax: %.2f%%"%np.linalg.norm ( (dfBoth['pMax_mN']*1e3-dfBoth['Pmax(uN)'])/dfBoth['Pmax(uN)']*100. ) )
+Error in pMax: 0.22%
+>>> print ("Error in hMax: %.1f%%"%np.linalg.norm ( (dfBoth['hMax_um']*1e3-dfBoth['hmax(nm)'])/dfBoth['hmax(nm)']*100. ) )
+Error in hMax: 4.7%
+>>> print ("Error in S: %.1f%%"%np.linalg.norm ( (dfBoth['S_mN/um']-dfBoth['S(uN/nm)'])/dfBoth['S(uN/nm)']*100. ) )
+Error in S: 3.3%
+>>> print ("Error in hc: %.1f%%"%np.linalg.norm ( (dfBoth['hc_um']*1e3-dfBoth['hc(nm)'])/dfBoth['hc(nm)']*100. ) )
+Error in hc: 8.1%
+>>> print ("Error in Ac: %.1f%%"%np.linalg.norm ( (dfBoth['A_um2']*1e6-dfBoth['A(nm^2)'])/dfBoth['A(nm^2)']*100. ) )
+Error in Ac: 12.0%
+>>> print ("Error in redE: %.1f%%"%np.linalg.norm ( (dfBoth['redE_GPa']-dfBoth['Er(GPa)'])/dfBoth['Er(GPa)']*100. ) )
+Error in redE: 3.8%
+>>> print ("Error in H: %.1f%%"%np.linalg.norm ( (dfBoth['H_GPa']-dfBoth['H(GPa)'])/dfBoth['H(GPa)']*100. ) )
+Error in H: 13.1%
+
+\endverbatim
+
+Analyse drift from last measurement
+\verbatim
+>>> myDrift = i.analysePreDrift(plot=False)
+Drift: 2.115 nm/s
+>>> i.plotAsDepth("E")                             #doctest: +SKIP
+\endverbatim
+
+Notes on plotAsDepth:
+- does not really make sense for only one unloading but nice if multiple unloading segemnts exist
+- allows also Hardness, Stiffness, .... (see its documentation for all options)
+
+Notes:
+- if you add "plot=True" to the line "i = Indent", then there will be nice plots
+- comparing these results to the results of Hysitron:
+  - differences in S and P are small <0.5% 
+  - differences in depths and reducedModulus are ok ~1% (Hysitron uses drift correction, not implemented yet)
+  - differences in H and A are large ~2% (since depend on h^2)
+- Hysitron issues:
+  - use the default .hld file
+  - reports a Youngs modulus even if area undefined
+
+- Remaining questions
+  - seems not to do any drift correction
+  - 0.011mN   seems to be noise in force signal (seems to depend on applied force)
+  - how does Hysitron calibrate tips
+  - how does Hysitron calibrate stiffness
+  - how drift is calculated: use fitting line to data, OR, connect first and last data point
+
+
+
+
+
+\section tutorialsAgilent Agilent advanced examples
+\subsection example0 Example: Tare time, depth, force
+calculate depth, force and timeOnSample from raw data by identifying surface, drift-rate, ...
+\verbatim
+>>> from nanoIndent import Indentation, Tip
+>>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
+>>> i = Indentation("Examples/Agilent/ISO.xls", tip)
+=============  Examples/Agilent/ISO.xls  ============
+     Displacement Into Surface      : h                    
+     Load On Sample                 : p                    
+     Time On Sample                 : t                    
+     Stiffness                      : slope                
+     Modulus                        : modulus              
+     Hardness                       : hardness             
+     Contact Area                   : A_c                  
+     Contact Depth                  : h_c                  
+ *** Abs Val dPdt                   NOT USED
+ *** dPdt                           NOT USED
+     Frame Stiffness                : frameStiffness       
+     Load vs Disp Slope             : pVsHSlope            
+ *** Max Load                       NOT USED
+ *** Points In Stiffness Fit        NOT USED
+     Raw Displacement               : hRaw                 
+     Raw Load                       : pRaw                 
+     Reduced Modulus                : modulusRed           
+ *** Segment Number                 NOT USED
+ *** Segment Type                   NOT USED
+     Stiffness Squared Over Load    : k2p                  
+     Support Spring Stiffness       : slopeSupport         
+     Time                           : tTotal               
+     X Position                     : xCoarse              
+     Y Position                     : yCoarse              
+>>> i.tareDepthForce(compareRead=True)
+Drift rate: 0.037 nm/s
+Error in h: 0.06%
+Error in p: 0.01%
+Error in t: 0.01%
+>>> i.tareDepthForce(compareRead=False,plot=True)#doctest: +SKIP
+\endverbatim
+
+\subsection example1 Example: Read G200 xls file and plot sum, don't specify indenter because not important for analysis of existing data
+\verbatim
+>>> from nanoIndent import Indentation
+>>> i = Indentation("Examples/Agilent/CSM.xls")
+=============  Examples/Agilent/CSM.xls  ============
+*** Segment                        NOT USED
+    Displacement Into Surface      : h                    
+    Load On Sample                 : p                    
+    Time On Sample                 : t                    
+    Harmonic Contact Stiffness     : slope                
+    Hardness                       : hardness             
+    Modulus                        : modulus              
+    Contact Area                   : A_c                  
+    Contact Depth                  : h_c                  
+*** CSM Status                     NOT USED
+    Harmonic Displacement          : hHarmonic            
+*** Harmonic Frequency             NOT USED
+    Harmonic Load                  : pHarmonic            
+    Harmonic Stiffness             : slopeInvalid         
+    Load vs Disp Slope             : pVsHSlope            
+    Phase Angle                    : phaseAngle           
+    Raw Displacement               : hRaw                 
+    Raw Load                       : pRaw                 
+    Reduced Modulus                : modulusRed           
+    Stiffness Squared Over Load    : k2p                  
+    Support Spring Stiffness       : slopeSupport         
+    Time                           : tTotal               
+    X Position                     : xCoarse              
+    Y Position                     : yCoarse              
+>>> while(len(i.testList)>0):
+...   plt.plot(i.h, i.modulus,'b-')                #doctest: +SKIP
+...   i.nextTest()
+>>> plt.xlabel("depth [um]")                       #doctest: +SKIP
+>>> plt.ylabel("modulus [MPa]")                    #doctest: +SKIP
+>>> plt.grid()                                     #doctest: +SKIP
+>>> plt.show()                                     #doctest: +SKIP
+>>> i = Indentation("Examples/Agilent/CSM.xls") 
+=============  Examples/Agilent/CSM.xls  ============
+*** Segment                        NOT USED
+    Displacement Into Surface      : h                    
+    Load On Sample                 : p                    
+    Time On Sample                 : t                    
+    Harmonic Contact Stiffness     : slope                
+    Hardness                       : hardness             
+    Modulus                        : modulus              
+    Contact Area                   : A_c                  
+    Contact Depth                  : h_c                  
+*** CSM Status                     NOT USED
+    Harmonic Displacement          : hHarmonic            
+*** Harmonic Frequency             NOT USED
+    Harmonic Load                  : pHarmonic            
+    Harmonic Stiffness             : slopeInvalid         
+    Load vs Disp Slope             : pVsHSlope            
+    Phase Angle                    : phaseAngle           
+    Raw Displacement               : hRaw                 
+    Raw Load                       : pRaw                 
+    Reduced Modulus                : modulusRed           
+    Stiffness Squared Over Load    : k2p                  
+    Support Spring Stiffness       : slopeSupport         
+    Time                           : tTotal               
+    X Position                     : xCoarse              
+    Y Position                     : yCoarse              
+>>> while(len(i.testList)>0):
+...   i.nextTest()
+...   plt.plot(i.h, i.hardness,'b-')               #doctest: +SKIP
+>>> plt.xlabel("depth [um]")                       #doctest: +SKIP
+>>> plt.ylabel("hardness [MPa]")                   #doctest: +SKIP
+>>> plt.grid()                                     #doctest: +SKIP
+>>> plt.show()                                     #doctest: +SKIP
+>>> i = Indentation("Examples/Agilent/CSM.xls")
+=============  Examples/Agilent/CSM.xls  ============
+*** Segment                        NOT USED
+    Displacement Into Surface      : h                    
+    Load On Sample                 : p                    
+    Time On Sample                 : t                    
+    Harmonic Contact Stiffness     : slope                
+    Hardness                       : hardness             
+    Modulus                        : modulus              
+    Contact Area                   : A_c                  
+    Contact Depth                  : h_c                  
+*** CSM Status                     NOT USED
+    Harmonic Displacement          : hHarmonic            
+*** Harmonic Frequency             NOT USED
+    Harmonic Load                  : pHarmonic            
+    Harmonic Stiffness             : slopeInvalid         
+    Load vs Disp Slope             : pVsHSlope            
+    Phase Angle                    : phaseAngle           
+    Raw Displacement               : hRaw                 
+    Raw Load                       : pRaw                 
+    Reduced Modulus                : modulusRed           
+    Stiffness Squared Over Load    : k2p                  
+    Support Spring Stiffness       : slopeSupport         
+    Time                           : tTotal               
+    X Position                     : xCoarse              
+    Y Position                     : yCoarse              
+>>> while(len(i.testList)>0):
+...   plt.plot(i.h, i.k2p,'b-')                    #doctest: +SKIP
+...   i.nextTest()
+>>> plt.xlabel("depth [um]")                       #doctest: +SKIP
+>>> plt.ylabel("stiffness2/force [MPa]")           #doctest: +SKIP
+>>> plt.grid()                                     #doctest: +SKIP
+>>> plt.show()                                     #doctest: +SKIP
+
+\endverbatim
+
+
+\section tutorialsTip Indenter Tip Tutorials
+\subsection example6 Compare indenter shapes
+\verbatim
+>>> from nanoIndent import Tip
+>>> i = Tip([32.9049, -6418.303798, 288484.8518, -989287.0625, 103588.5588, 675977.3345])
+>>> i.plotIndenterShape()                          #doctest: +SKIP
+>>> i = Tip([5000, 30, "sphere"])
+>>> i.plotIndenterShape()                          #doctest: +SKIP
+
+\endverbatim
+
+Compare more tips, and plot
+\verbatim
+>>> from nanoIndent import Tip
+>>> areaFuncts = [ [24.494, 545053, -152689e3, 2988560000, -10440900000, 7941280000],\
+...                [24.5, -274297.571919, 62433198.000404, -1113200937.674743, 3719191096.269505, -2767085026.6648] ]
+>>> for idx,areaFunct in enumerate(areaFuncts):
+...   i = Tip()
+...   i.prefactors = areaFunct+['agilent']
+...   if idx==0:                                                            #doctest: +SKIP
+...     i.plotIndenterShape(show=False, tipLabel="Fit 1")                   #doctest: +SKIP
+...   else:                                                                 #doctest: +SKIP
+...     i.plotIndenterShape(tipLabel="Fit 2", fileName="CompareTips.png")   #doctest: +SKIP
+
+\endverbatim
+**/
