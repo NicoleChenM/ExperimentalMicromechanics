@@ -11,7 +11,7 @@
 # UNITS: one should use mSB units in this code, since Agilent area function is unit-dependent
 # mSB: [mN], [um], [GPa] (force, length, stress)
 #
-##### Variables: differentiate ########
+##### Variables: differentiate different length ########
 # array of full length: force, time, depth, validMask, ...  [used for plotting]
 # array of valid length: E,H,Ac,hc, ... [only has the length where these values are valid]
 #    force[validMask] = pMax
@@ -19,8 +19,7 @@
 #
 # Coding rules:
 # - Change all variables: do not keep original-depth as can be reread and makes code less readable
-# TODO
-# 1. see TODOs in this file
+
 # 2. clean frame stiffness, additional compilance  : differentiate between both
 #    - fitting unloading curve: assume as intial guess m=1.5
 # 3. see separate file nanoIndentCalibrationMethods
@@ -28,15 +27,16 @@
 #    - better calibration methods
 import numpy as np
 import pandas as pd
-import math, logging
+import math
 import matplotlib.pyplot as plt
 from enum import Enum
 from scipy.optimize import differential_evolution, fmin_tnc, fmin_l_bfgs_b, curve_fit, OptimizeResult, newton
 
+# enum classes: make code more readable
 class Method(Enum):
-  ISO = 1
+  ISO = 1    #one unloading
   MULTI = 2  #multiple ISO unloadings
-  CSM = 3
+  CSM = 3    #CSM method: number of unloadings ~ all data-points
 
 class Vendor(Enum):
   Agilent = 1
@@ -44,8 +44,12 @@ class Vendor(Enum):
   HysiTXT = 3
   Micromaterials = 4
 
+class FileType(Enum): 
+  Single = 1  #single test in file
+  Multi  = 2  #multiple tests in file
+  
 class Indentation:
-  def __init__(self, fileName, tip=None, verbose=1):
+  def __init__(self, fileName, nuMat= None, tip=None, verbose=1):
     """
     Initialize indentation experiment data
 
@@ -54,7 +58,10 @@ class Indentation:
        tip:  tip class to use; None=perfect
        verbose: the higher, the more information printed: 1=default, 0=print nothing
     """
-    self.nuMat = 0.3
+    if nuMat is None:
+      self.nuMat = 0.3
+    else:
+      self.nuMat = nuMat
     self.nuIndent = 0.07
     self.EIndent  = 1140                                    #GPa from Oliver,Pharr Method paper
     self.beta = 0.75                                        #beta: shape coeffcient
@@ -73,22 +80,25 @@ class Indentation:
     if fileName.endswith(".xls"):
       # KLA, Agilent, Keysight, MTS
       self.vendor = Vendor.Agilent
+      self.fileType = FileType.Multi
       self.unloadPMax = 0.999
       self.unloadPMin = 0.5
-      success = self.initAgilentXLS(fileName)
+      success = self.loadAgilent(fileName)
     if (fileName.endswith(".hld") or fileName.endswith(".txt")) and not success:
       # Hysitron
       if fileName.endswith(".hld"): self.vendor = Vendor.HysiHLD
       else                        : self.vendor = Vendor.HysiTXT
+      self.fileType = FileType.Single
       self.unloadPMax = 0.95
       self.unloadPMin = 0.4
-      success = self.initHysitron(fileName)
+      success = self.loadHysitron(fileName)
     if fileName.endswith(".txt") and not success:
       # Micromaterials
+      self.vendor = Vendor.Micromaterials
+      self.fileType = FileType.Single
       self.unloadPMax = 0.95
       self.unloadPMin = 0.4
-      self.vendor = Vendor.Micromaterials
-      success = self.initMicromaterials(fileName)
+      success = self.loadMicromaterials(fileName)
     return
 
   ##
@@ -197,7 +207,7 @@ class Indentation:
     if self.method== Method.CSM:
       print("***WARNING Cannot calculate unloading data from CSM method")
       return None,None,None,None
-    logging.info("Number of unloading segments:"+str(len(self.iLHU)))
+    print("Number of unloading segments:"+str(len(self.iLHU)))
     S         = []
     maxDeltaP = -0.01
     t = self.t - np.min(self.t)  #undo resetting zero during init
@@ -217,7 +227,7 @@ class Indentation:
       try:
         opt, _ = curve_fit(self.UnloadingPowerFunc, h[mask],P[mask], p0=[B0,hf0,1.] )
         B,hf,m = opt
-      except: #if np.isnan(B):
+      except:
         print("stiffnessFrommasking - Multi Unload - Fitting failed. use linear")
         B  = (P[mask][-1]-P[mask][0])/(h[mask][-1]-h[mask][0])
         hf = h[mask][0] -P[mask][0]/B
@@ -236,7 +246,7 @@ class Indentation:
 
   def popIn(self, correctH=True, plot=True, removeInitialNM=2.):
     """
-    Search for pop-in
+    Search for pop-in by jump in depth rate
 
     Certainty:
     - deltaSlope: higher is better (difference in elastic - plastic slope). Great indicator
@@ -246,13 +256,15 @@ class Indentation:
     - deltaH: higher is better (delta depth in jump). bad indicator
     - deltaRate: higher is better (depth rate during jump). bad indicator
 
+    Future: iterate over largest, to identify best
+
     Args:
-       correctH: correct depth such that curves aligend
+       correctH: correct depth such that curves aligned
        plot: plot pop-in curve
        removeInitialNM: remove initial nm from data as they have large scatter
 
     Returns:
-       pop-in force, dictonary of certainty
+       pop-in force, dictionary of certainty
     """
     maxPlasticFit = 150
     minElasticFit = 0.01
@@ -428,9 +440,12 @@ class Indentation:
 
   def tareDepthForce(self, slopeThreshold=100, compareRead=False, plot=False):
     """
-    Calculate depth, force, time from raw data
+    Calculate surface contact (by slope being larger than threshold) 
+    and offset depth,force,time by the surface
 
-    TODO Improve surface identifation in future
+    Future improvements:
+    - surface identification in future
+    - handle more cases
 
     Args:
        slopeThreshold: threshold slope in P-h curve for contact: 200,300
@@ -481,7 +496,7 @@ class Indentation:
     return
 
 
-  def updateSlopes(self):
+  def analyse(self):
     """
     update slopes/stiffness, Young's modulus and hardness after displacement correction by:
     - drift change
@@ -517,7 +532,7 @@ class Indentation:
     idxEnd = np.argmin(np.abs( t[:]-(40.) )  )
     drift = rate[idxEnd]
     print("Drift:", round(drift*1.e3,3),"nm/s")
-    self.results['drift'] = drift
+    self.meta['drift'] = drift
     if plot:
       _, ax1 = plt.subplots()
       ax2 = ax1.twinx()
@@ -530,8 +545,11 @@ class Indentation:
       plt.show()
     return drift
 
+
   def identifyLoadHoldUnload(self):
-    #identify load-hold-unloading cycles
+    """
+    internal method: identify load - hold - unload segments in data
+    """
     iSurface = np.min(np.where( self.h>=0                     ))
     iLoad    = np.min(np.where( self.p-np.max(self.p)*0.999>0 ))
     if iLoad<len(self.p)-1:
@@ -550,7 +568,7 @@ class Indentation:
         print("**ERROR in identify load-hold-unloading cycles")
         print(iSurface,iLoad,iHold,iDriftS,iDriftE, len(self.h))
     else:
-      print("No hold or unloading segments")
+      print("Warning: no hold or unloading segments in data")
       iHold     = len(self.p)-3
       iDriftS   = len(self.p)-2
       iDriftE   = len(self.p)-1
@@ -565,11 +583,9 @@ class Indentation:
   # @name FILE HANDLING; PLOTTING
   # Access to class variables
   #@{
-  def initAgilentXLS(self, fileName):
+  def loadAgilent(self, fileName):
     """
     Initialize G200 excel file for processing
-
-    TODO Read Poisson ratio from file
 
     Args:
        fileName: file name
@@ -578,6 +594,10 @@ class Indentation:
     self.testList = []
     self.fileName = fileName    #one file can have multiple tests
     self.indicies = {}
+    wb = pd.read_excel(fileName,sheet_name='Required Inputs')
+    self.meta.update( dict(wb.iloc[-1]) ) 
+    if self.meta['Poissons Ratio']!=self.nuMat:
+      print("WARNING: your Poissions Ratio is different than in file.",self.nuMat,self.meta['Poissons Ratio'])
     self.workbook = pd.read_excel(fileName, sheet_name=None)
     tagged = []
     code = {"Load On Sample":"p", "Force On Surface":"p", "_Load":"pRaw", "Raw Load":"pRaw"\
@@ -615,11 +635,11 @@ class Indentation:
           #if self.verbose: print("   Found column names: ",sorted(self.indicies))
       if "Tagged" in dfName: tagged.append(dfName)
     if len(tagged)>0 and self.verbose: print("Tagged ",tagged)
-    self.nextTest()
+    self.nextAgilentTest()
     return True
 
 
-  def nextTest(self):
+  def nextAgilentTest(self):
     """
     Go to next sheet in worksheet and prepare indentation data
 
@@ -672,9 +692,9 @@ class Indentation:
     return True
 
 
-  def initHysitron(self, fileName, plotContact=False):
+  def loadHysitron(self, fileName, plotContact=False):
     """
-    Initialize Hysitron hld or txt file for processing
+    Load Hysitron hld or txt file for processing, only contains one test
 
     Args:
        fileName: file name
@@ -682,7 +702,7 @@ class Indentation:
     """
     from io import StringIO
     self.fileName = fileName
-    logging.info("Open file: "+self.fileName)
+    print("Open Hysitron file: "+self.fileName)
     inFile = open(self.fileName, 'r',encoding='iso-8859-1')
     #### HLD FILE ###
     if self.fileName.endswith('.hld'):
@@ -716,7 +736,7 @@ class Indentation:
         if label == "Tip C4":       prefact[4] = value #nm^2/nm^0.125
         if label == "Tip C5":       prefact[5] = value #nm^2/nm^0.0625
         if label == "Contact Threshold": forceTreshold = value/1.e3 #uN
-        if label == "Drift Rate":   self.results['drift'] = value/1.e3 #um/s
+        if label == "Drift Rate":   self.meta['drift_rate'] = value/1.e3 #um/s
         if label == "Number of Segments"  : numSegments  = value
         if label == "Segment Begin Time"  : segmentTime.append(value)
         if label == "Segment Begin Demand": pStart     = value
@@ -861,16 +881,16 @@ class Indentation:
 
 
 
-  def initMicromaterials(self, fileName, plotContact=False):
+  def loadMicromaterials(self, fileName, plotContact=False):
     """
-    Initialize Micromaterials txt file for processing
+    Load Micromaterials txt file for processing, contains only one test
 
     Args:
        fileName: file name
        plotContact: plot intial contact identification (use this method for access)
     """
     self.fileName = fileName
-    logging.info("Open file: "+self.fileName)
+    print("Open Micromaterials file: "+self.fileName)
     try:
       inFile = open(self.fileName, 'r',encoding='iso-8859-1')
       dataTest = np.loadtxt(inFile)
@@ -899,7 +919,7 @@ class Indentation:
     """
     dfAll = pd.DataFrame()
     if self.method == Method.CSM:
-        i = -1 # TODO improve, use last segment to fit
+        i = -1 # only last value is saved
         results = {"S_mN/um":self.slope[i], "hMax_um":self.h[self.valid][i], "pMax_mN":self.p[self.valid][i],\
                   "redE_GPa":self.modulusRed[i], "A_um2":self.A_c[i], "hc_um":self.h_c[i], "E_GPa":self.modulus[i],\
                   "H_GPa":self.hardness[i],"segment":str(i+1)}
@@ -910,7 +930,7 @@ class Indentation:
         results = {"S_mN/um":self.slope[i], "hMax_um":self.h[self.valid][i], "pMax_mN":self.p[self.valid][i],\
                   "redE_GPa":self.modulusRed[i], "A_um2":self.A_c[i], "hc_um":self.h_c[i], "E_GPa":self.modulus[i],\
                   "H_GPa":self.hardness[i],"segment":str(i+1)}
-        results.update(self.results)
+        results.update(self.meta)
         df = pd.DataFrame(results, index=[self.fileName])
         dfAll = dfAll.append(df)
     dfAll['method'] = "Python"
@@ -922,12 +942,12 @@ class Indentation:
 
   def getDictionary(self):
     """
-    save all results to dictionary variable for easy proccessing
+    save last result to dictionary variable for easy proccessing
     """
     if len(self.slope)>1:
       print("Error in getDictionary")
       return None
-    i = 0
+    i = -1
     results = {"S_mN/um":self.slope[i], "hMax_um":self.h[self.valid][i], "pMax_mN":self.p[self.valid][i],\
               "redE_GPa":self.modulusRed[i], "A_um2":self.A_c[i], "hc_um":self.h_c[i], "E_GPa":self.modulus[i],\
               "H_GPa":self.hardness[i],"segment":str(i+1)}
@@ -968,9 +988,9 @@ class Indentation:
       show: show figure, else do not show
     """
     if len(self.slope)==1:
-      logging.info("Stiffness:"+str(round(self.slope[0],1))     +"mN/um   hMax:"+str(round(self.h[self.valid][0],4))+"um    pMax:"+str(round(self.p[self.valid][0],2))+"mN")
-      logging.info("E*:       "+str(round(self.modulusRed[0],1))+"GPa     A:   "+str(round(self.A_c[0],4))+          "um2    hc: "+str(round(self.h_c[0],4))+"um")
-      logging.info("E:        "+str(round(self.modulus[0],1))   +"GPa     H:   "+str(round(self.hardness[0],1))+     "GPa")
+      print("Stiffness:"+str(round(self.slope[0],1))     +"mN/um   hMax:"+str(round(self.h[self.valid][0],4))+"um    pMax:"+str(round(self.p[self.valid][0],2))+"mN")
+      print("E*:       "+str(round(self.modulusRed[0],1))+"GPa     A:   "+str(round(self.A_c[0],4))+          "um2    hc: "+str(round(self.h_c[0],4))+"um")
+      print("E:        "+str(round(self.modulus[0],1))   +"GPa     H:   "+str(round(self.hardness[0],1))+     "GPa")
     f, ax = plt.subplots()
     ax.axhline(0,ls="dashed",c='k')
     ax.axvline(0,ls="dashed",c='k')
@@ -1068,12 +1088,12 @@ class Indentation:
     print("      ContactArea = 598047.490101769 nm^2")
     [redE, A_c, _]  = self.OliverPharrMethod(np.array([harmStiff]), np.array([load]), np.array([totalDepth]))
     print("   Evaluated by this python method")
-    print("      reducedModulus [GPa] =",redE[0],"  with error=", (redE-182.338858733495)/182.338858733495)
-    print("      ContactArea    [um2] =",A_c[0],"  with error=", (A_c-598047.490101769/1.e6)/598047.490101769/1.e6)
+    print("      reducedModulus [GPa] =",round(redE[0],4),"  with error=", round((redE[0]-182.338858733495)*100/182.338858733495,4),'%')
+    print("      ContactArea    [um2] =",round(A_c[0],4),"  with error=", round((A_c[0]-598047.490101769/1.e6)*100/598047.490101769/1.e6,4),'%')
     E = self.YoungsModulus(redE)
-    print("      Youngs Modulus [GPa] =",E[0],"  with error=", (E-190.257729329881)/190.257729329881)
+    print("      Youngs Modulus [GPa] =",round(E[0],4),"  with error=", round((E[0]-190.257729329881)*100/190.257729329881,4),'%')
     totalDepth2 = self.inverseOliverPharrMethod(np.array([harmStiff]), np.array([load]), redE)
-    print("      By using inverse methods: total depth h=",totalDepth2[0], "[um]  with error=", (totalDepth2[0]-totalDepth)/totalDepth)
+    print("      By using inverse methods: total depth h=",totalDepth2[0], "[um]  with error=", round((totalDepth2[0]-totalDepth)*100/totalDepth,4),'%')
     print("End Test")
     return
 
@@ -1099,9 +1119,9 @@ class Indentation:
     print("      Stiffness Squared Over Load=670.424429535749 GPa")
     [redE, _, _]  = self.OliverPharrMethod(np.array([harmStiff]), np.array([load]), np.array([totalDepth]))
     E = self.YoungsModulus(redE)
-    print("      Youngs Modulus [GPa] =",E,"  with error=", (E-75.1620054287519)/75.1620054287519)
+    print("      Youngs Modulus [GPa] =",E[0],"  with error=", round((E[0]-75.1620054287519)*100/75.1620054287519,4),'%'  )
     totalDepth2 = self.inverseOliverPharrMethod(np.array([harmStiff]), np.array([load]), redE)
-    print("      By using inverse methods: total depth h=",totalDepth2[0], "[um]  with error=", (totalDepth2[0]-totalDepth)/totalDepth)
+    print("      By using inverse methods: total depth h=",totalDepth2[0], "[um]  with error=", round((totalDepth2[0]-totalDepth)*100/totalDepth,4), '%')
     print("End Test")
     return
 
@@ -1245,7 +1265,7 @@ class Tip:
     elif self.prefactors[-1]=="perfect":
       area = 24.494*np.power(h,2)
     elif self.prefactors[-1]=="sphere":
-      radius = self.prefactors[0]  #BUG: *1000.
+      radius = self.prefactors[0]*1000.
       openingAngle = self.prefactors[1]
       cos      = math.cos(openingAngle/180.0*math.pi)
       sin      = math.sin(openingAngle/180.0*math.pi)
