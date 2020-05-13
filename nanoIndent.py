@@ -27,10 +27,13 @@
 #    - better calibration methods
 import numpy as np
 import pandas as pd
-import math
+import math, io, lmfit
 import matplotlib.pyplot as plt
 from enum import Enum
 from scipy.optimize import differential_evolution, fmin_tnc, fmin_l_bfgs_b, curve_fit, OptimizeResult, newton
+from scipy import ndimage
+from zipfile import ZipFile
+
 
 # enum classes: make code more readable
 class Method(Enum):
@@ -44,19 +47,19 @@ class Vendor(Enum):
   HysiTXT = 3
   Micromaterials = 4
 
-class FileType(Enum): 
+class FileType(Enum):
   Single = 1  #single test in file
   Multi  = 2  #multiple tests in file
-  
+
 class Indentation:
-  def __init__(self, fileName, nuMat= None, tip=None, verbose=1):
+  def __init__(self, fileName, nuMat= None, tip=None, verbose=2):
     """
     Initialize indentation experiment data
 
     Args:
        fileName: fileName to open (.xls, .hld)
        tip:  tip class to use; None=perfect
-       verbose: the higher, the more information printed: 1=default, 0=print nothing
+       verbose: the higher, the more information printed: 2=default, 1=minimal, 0=print nothing
     """
     if nuMat is None:
       self.nuMat = 0.3
@@ -99,6 +102,13 @@ class Indentation:
       self.unloadPMax = 0.95
       self.unloadPMin = 0.4
       success = self.loadMicromaterials(fileName)
+    if fileName.endswith(".zip") and not success:
+      # Micromaterials
+      self.vendor = Vendor.Micromaterials
+      self.fileType = FileType.Multi
+      self.unloadPMax = 0.95
+      self.unloadPMin = 0.4
+      success = self.loadMicromaterialsZip(fileName)
     return
 
   ##
@@ -207,7 +217,7 @@ class Indentation:
     if self.method== Method.CSM:
       print("***WARNING Cannot calculate unloading data from CSM method")
       return None,None,None,None
-    print("Number of unloading segments:"+str(len(self.iLHU)))
+    if self.verbose>1: print("Number of unloading segments:"+str(len(self.iLHU))+"  Method:"+str(self.method))
     S         = []
     maxDeltaP = -0.01
     t = self.t - np.min(self.t)  #undo resetting zero during init
@@ -216,6 +226,8 @@ class Indentation:
       plt.plot(h,P,'-k')
     for cycle in self.iLHU:
       loadStart, loadEnd, unloadStart, unloadEnd = cycle
+      if loadStart>loadEnd or loadEnd>unloadStart or unloadStart>unloadEnd:
+        print('**ERROR: indicies not in order:',cycle)
       maskSegment = np.zeros_like(h, dtype=np.bool)
       maskSegment[unloadStart:unloadEnd+1] = True
       maskForce   = np.logical_and(P<P[loadEnd]*self.unloadPMax, P>P[loadEnd]*self.unloadPMin)
@@ -354,7 +366,7 @@ class Indentation:
         plt.axhline(eAve+eStd, color='k', linestyle='dashed')
         plt.axhline(eAve-eStd, color='k', linestyle='dashed')
         plt.ylim([eAve-4*eStd,eAve+4*eStd])
-      plt.xlabel('depth [um]')
+      plt.xlabel('depth [$\mu m$]')
       plt.ylim(ymin=0)
       plt.ylabel('Youngs modulus [GPa]')
       plt.legend(loc=0)
@@ -383,7 +395,7 @@ class Indentation:
         plt.axhline(HAve, color='b')
         plt.axhline(HAve+HStd, color='b', linestyle='dashed')
         plt.axhline(HAve-HStd, color='b', linestyle='dashed')
-      plt.xlabel('depth [um]')
+      plt.xlabel('depth [$\mu m$]')
       plt.ylabel('hardness [GPa]')
       plt.legend(loc=0)
       plt.show()
@@ -432,15 +444,15 @@ class Indentation:
       plt.plot(h,s2f, 'b-')
       s2fFit = np.polyval(prefactors,h)
       plt.plot(h, s2fFit, 'r-', lw=3)
-      plt.xlabel('depth [um]')
-      plt.ylabel('stiffness2/force [GPa]')
+      plt.xlabel('depth [$\mu m$]')
+      plt.ylabel('stiffness2/force [$GPa$]')
       plt.show()
     return prefactors
 
 
   def tareDepthForce(self, slopeThreshold=100, compareRead=False, plot=False):
     """
-    Calculate surface contact (by slope being larger than threshold) 
+    Calculate surface contact (by slope being larger than threshold)
     and offset depth,force,time by the surface
 
     Future improvements:
@@ -487,9 +499,9 @@ class Indentation:
       ax1.axvline(0, linestyle='dashed', c='k')
       ax1.legend(loc=2)
       ax2.plot(self.t, self.pVsHSlope, "C2--", label='pVsHSlope')
-      ax1.set_xlabel(r"depth $[\mu m]$")
-      ax1.set_ylabel(r"force $[mN]$")
-      ax2.set_ylabel(r"depth $[mN/\mu m]$", color='C2')
+      ax1.set_xlabel("depth [$\mu m$]")
+      ax1.set_ylabel("force [$mN$]")
+      ax2.set_ylabel("depth [$mN/\mu m$]", color='C2')
       plt.show()
     #set newly obtained data
     self.h, self.p, self.t = h, p, t
@@ -539,16 +551,81 @@ class Indentation:
       ax1.plot(t,rate*1.e3,'r')
       ax1.axhline(0.05,c='r',linestyle='dashed')
       ax2.plot(t,h*1.e3,'b')
-      ax1.set_xlabel('time [s]')
-      ax1.set_ylabel('drift rate [nm/s]', color='r')
-      ax2.set_ylabel('depth [nm]', color='b')
+      ax1.set_xlabel('time [$s$]')
+      ax1.set_ylabel('drift rate [$nm/s$]', color='r')
+      ax2.set_ylabel('depth [$nm$]', color='b')
       plt.show()
     return drift
 
-
-  def identifyLoadHoldUnload(self):
+  def identifyLoadHoldUnload(self,plot=False):
     """
-    internal method: identify load - hold - unload segments in data
+    internal method: identify ALL load - hold - unload segments in data
+
+    Args:
+       plot: verify by plotting
+    """
+    if self.method==Method.CSM:
+      self.identifyLoadHoldUnloadCSM()
+      return
+    rate = self.p[1:]-self.p[:-1]
+    #using histogram, define masks for loading and unloading
+    hist,bins= np.histogram(rate , bins=100)
+    binCenter = (bins[1:]+bins[:-1])/2
+    peaks = np.where(hist>10)[0]                  #peaks with more than 10 items
+    zeroID = np.argmin(np.abs(binCenter[peaks]))  #id which is closest to zero
+    zeroValue = binCenter[peaks][zeroID]
+    zeroDelta = max( binCenter[zeroID+1]-binCenter[zeroID],\
+                     binCenter[zeroID]-binCenter[zeroID-1])/2
+    loadMask  = rate>(zeroValue+zeroDelta)
+    unloadMask= rate<(zeroValue-zeroDelta)
+    #clean small fluctuations
+    size = 7
+    loadMask = ndimage.binary_closing(loadMask, structure=np.ones((size,)) )
+    unloadMask = ndimage.binary_closing(unloadMask, structure=np.ones((size,)))
+    loadMask = ndimage.binary_opening(loadMask, structure=np.ones((size,)))
+    unloadMask = ndimage.binary_opening(unloadMask, structure=np.ones((size,)))
+    #find index where masks are changing from true-false
+    loadMask  = np.r_[False,loadMask,False] #pad with false on both sides
+    unloadMask= np.r_[False,unloadMask,False]
+    loadIdx   = np.flatnonzero(loadMask[1:]   != loadMask[:-1])
+    unloadIdx = np.flatnonzero(unloadMask[1:] != unloadMask[:-1])
+    if len(loadIdx)!=len(unloadIdx):
+      #TODO Repair possibly that this is not required
+      self.identifyLoadHoldUnloadCSM()
+      return
+    #plot
+    if plot:
+      print("Verify that next two arrays same length")
+      print(loadIdx)
+      print(unloadIdx)
+      plt.plot(self.p)
+      plt.plot(loadIdx[::2],  self.p[loadIdx[::2]],  'o',label='load',markersize=5)
+      plt.plot(loadIdx[1::2], self.p[loadIdx[1::2]], 'o',label='hold')
+      plt.plot(unloadIdx[::2],self.p[unloadIdx[::2]],'o',label='unload')
+      plt.plot(unloadIdx[1::2],self.p[unloadIdx[1::2]],'o',label='unload-end',markersize=5)
+      plt.legend(loc=0)
+      plt.xlabel('time incr. []')
+      plt.ylabel('force [$mN$]')
+      plt.show()
+    self.iLHU = []
+    for i,_ in enumerate(loadIdx[::2]):
+      self.iLHU.append([loadIdx[::2][i],loadIdx[1::2][i],unloadIdx[::2][i],unloadIdx[1::2][i]])
+    if len(self.iLHU)>1:
+      self.method=Method.MULTI
+    #drift segments
+    iDriftS = unloadIdx[1::2][i]+1
+    iDriftE = len(self.p)-1
+    if iDriftS+1>iDriftE:
+      iDriftS=iDriftE-1
+    self.iDrift = [iDriftS,iDriftE]
+    return
+
+
+  def identifyLoadHoldUnloadCSM(self):
+    """
+    internal method: identify load - hold - unload segment in CSM data
+
+    Backup: if identifyLoadHoldUnload fails
     """
     iSurface = np.min(np.where( self.h>=0                     ))
     iLoad    = np.min(np.where( self.p-np.max(self.p)*0.999>0 ))
@@ -567,8 +644,9 @@ class Indentation:
       if not (iSurface<iLoad and iLoad<iHold and iHold<iDriftS and iDriftS<iDriftE and iDriftE<len(self.h)):
         print("**ERROR in identify load-hold-unloading cycles")
         print(iSurface,iLoad,iHold,iDriftS,iDriftE, len(self.h))
-    else:
-      print("Warning: no hold or unloading segments in data")
+    else:  #This part is required
+      if self.method != Method.CSM:
+        print("Warning: no hold or unloading segments in data")
       iHold     = len(self.p)-3
       iDriftS   = len(self.p)-2
       iDriftE   = len(self.p)-1
@@ -589,16 +667,15 @@ class Indentation:
 
     Args:
        fileName: file name
-       plot: plot curve (not implemented)
     """
     self.testList = []
     self.fileName = fileName    #one file can have multiple tests
     self.indicies = {}
     wb = pd.read_excel(fileName,sheet_name='Required Inputs')
-    self.meta.update( dict(wb.iloc[-1]) ) 
+    self.meta.update( dict(wb.iloc[-1]) )
     if self.meta['Poissons Ratio']!=self.nuMat:
       print("WARNING: your Poissions Ratio is different than in file.",self.nuMat,self.meta['Poissons Ratio'])
-    self.workbook = pd.read_excel(fileName, sheet_name=None)
+    self.datafile = pd.read_excel(fileName, sheet_name=None)
     tagged = []
     code = {"Load On Sample":"p", "Force On Surface":"p", "_Load":"pRaw", "Raw Load":"pRaw"\
                 ,"Displacement Into Surface":"h", "_Displacement":"hRaw", "Raw Displacement": "hRaw"\
@@ -613,9 +690,9 @@ class Indentation:
                 ,"TotalLateralForce": "L", "X Force": "pX", "_XForce": "pX", "Y Force": "pY", "_YForce": "pY"\
                 ,"_XDeflection": "Ux", "_YDeflection": "Uy" }
     self.fullData = ['h','p','t','pVsHSlope','hRaw','pRaw','tTotal','slopeSupport']
-    if self.verbose: print("=============  "+fileName+"  ============")
-    for dfName in self.workbook.keys():
-      df    = self.workbook.get(dfName)
+    if self.verbose>1: print("=============  "+fileName+"  ============")
+    for dfName in self.datafile.keys():
+      df    = self.datafile.get(dfName)
       if "Test " in dfName and not "Tagged" in dfName:
         self.testList.append(dfName)
         #print "  I should process sheet |",sheet.name,"|"
@@ -623,18 +700,21 @@ class Indentation:
           for cell in df.columns:
             if cell in code:
               self.indicies[code[cell]] = cell
-              if self.verbose: print("     %-30s : %-20s "%(cell,code[cell]) )
+              if self.verbose>1: print("     %-30s : %-20s "%(cell,code[cell]) )
             else:
-              if self.verbose: print(" *** %-30s NOT USED"%cell)
-          for item in self.indicies:
-            if "Harmonic" in item: self.method = Method.CSM
+              if self.verbose>1: print(" *** %-30s NOT USED"%cell)
+            if "Harmonic" in cell:
+              self.method = Method.CSM
           #reset to ensure default values are set
           if not "p" in self.indicies: self.indicies['p']=self.indicies['pRaw']
           if not "h" in self.indicies: self.indicies['h']=self.indicies['hRaw']
           if not "t" in self.indicies: self.indicies['t']=self.indicies['tTotal']
           #if self.verbose: print("   Found column names: ",sorted(self.indicies))
       if "Tagged" in dfName: tagged.append(dfName)
-    if len(tagged)>0 and self.verbose: print("Tagged ",tagged)
+    if len(tagged)>0 and self.verbose>1: print("Tagged ",tagged)
+    if not ("t" in self.indicies) or not ("p" in self.indicies) or \
+       not ("h" in self.indicies) or not ("slope" in self.indicies)  :
+          print("WARNING: INDENTATION: Some index is missing (t,p,h,slope) should be there")
     self.nextAgilentTest()
     return True
 
@@ -647,22 +727,20 @@ class Indentation:
     - only affects/applies directly depth (h) and stiffness (s)
     - modulus, hardness and k2p always only use the one with frame correction
     """
-    if not self.vendor == Vendor.Agilent: return False #cannot be used
+    if self.vendor!=Vendor.Agilent: return False #cannot be used
     if len(self.testList)==0: return False   #no sheet left
-    if not ("t" in self.indicies) or \
-        not ("p" in self.indicies) or \
-        not ("h" in self.indicies) or \
-        not ("slope" in self.indicies)  :
-          print("WARNING: INDENTATION: Some index is missing?", self.indicies)
     self.testName = self.testList.pop(0)
 
     #read data and identify valid data points
-    df     = self.workbook.get(self.testName)
-    slope   = np.array(df[self.indicies['slope']][1:-1], dtype=np.float)
+    df     = self.datafile.get(self.testName)
     h       = np.array(df[self.indicies['h'    ]][1:-1], dtype=np.float)
     self.validFull = np.isfinite(h)
-    self.valid =  np.isfinite(slope)
-    self.valid[self.valid] = slope[self.valid] > 0.0  #only valid points if stiffness is positiv
+    if 'slope' in self.indicies:
+      slope   = np.array(df[self.indicies['slope']][1:-1], dtype=np.float)
+      self.valid =  np.isfinite(slope)
+      self.valid[self.valid] = slope[self.valid] > 0.0  #only valid points if stiffness is positiv
+    else:
+      self.valid = self.validFull
     for index in self.indicies:
       data = np.array(df[self.indicies[index]][1:-1], dtype=np.float)
       mask = np.isfinite(data)
@@ -687,7 +765,8 @@ class Indentation:
     if "slopeSupport" in self.indicies: self.slopeSupport /= 1.e3 #from N/m in mN/um
     if 'h_c' in self.indicies         : self.h_c /= 1.e3  #from nm in um
     if 'hRaw' in self.indicies        : self.hRaw /= 1.e3  #from nm in um
-    if not "k2p" in self.indicies     : self.k2p = self.slope * self.slope / self.p[self.valid]
+    if not "k2p" in self.indicies and 'slope' in self.indicies:
+      self.k2p = self.slope * self.slope / self.p[self.valid]
     self.identifyLoadHoldUnload()
     return True
 
@@ -702,7 +781,6 @@ class Indentation:
     """
     from io import StringIO
     self.fileName = fileName
-    print("Open Hysitron file: "+self.fileName)
     inFile = open(self.fileName, 'r',encoding='iso-8859-1')
     #### HLD FILE ###
     if self.fileName.endswith('.hld'):
@@ -710,6 +788,7 @@ class Indentation:
       if not "File Version: Hysitron" in line:
          #not a Hysitron file
         return False
+      if self.verbose>1: print("Open Hysitron file: "+self.fileName)
 
       #read meta-data
       prefact = [0]*6
@@ -804,6 +883,7 @@ class Indentation:
       self.meta = {'measurementType': 'Hysitron Indentation TXT', 'dateMeasurement':line0.strip()}
       if line1 != "\n" or "Number of Points" not in line2 or not "Depth (nm)" in line3:
         return False #not a Hysitron file
+      if self.verbose>1: print("Open Hysitron file: "+self.fileName)
       dataTest = np.loadtxt(inFile)
       #store data
       self.t = dataTest[:,2]
@@ -886,26 +966,57 @@ class Indentation:
     Load Micromaterials txt file for processing, contains only one test
 
     Args:
-       fileName: file name
+       fileName: file name or file-content
        plotContact: plot intial contact identification (use this method for access)
     """
-    self.fileName = fileName
-    print("Open Micromaterials file: "+self.fileName)
-    try:
-      inFile = open(self.fileName, 'r',encoding='iso-8859-1')
-      dataTest = np.loadtxt(inFile)
+    try:            #file-content given
+      dataTest = np.loadtxt(fileName)
+      if not isinstance(fileName, io.TextIOWrapper):
+        self.fileName = fileName
+        if self.verbose>1: print("Open Micromaterials file: "+self.fileName)
+        self.meta = {'measurementType': 'Micromaterials Indentation TXT'}
     except:
       print("Is not a Micromaterials file")
       return False
+
     #store data
     self.t = dataTest[:,0]
     self.h = dataTest[:,1]/1.e3
     self.p = dataTest[:,2]
+    self.valid = np.ones_like(self.t, dtype=np.bool)
     #set unknown values
     forceTreshold = 0.25 #250uN
     self.identifyLoadHoldUnload()
-    self.meta = {'measurementType': 'Micromaterials Indentation TXT'}
     return True
+
+
+  def loadMicromaterialsZip(self, fileName):
+    """
+    Initialize zip-file file for processing
+
+    Args:
+       fileName: file name
+    """
+    if self.verbose>1: print("Open Micromaterials zip-file: "+fileName)
+    self.datafile = ZipFile(fileName)
+    self.testList = self.datafile.namelist()
+    self.fileName = fileName
+    self.nextMicromaterialsTest()
+    self.meta = {'measurementType': 'Micromaterials Indentation ZIP'}
+    return True
+
+
+  def nextMicromaterialsTest(self):
+    """
+    Go to next file in zip-file
+    """
+    if self.vendor!=Vendor.Micromaterials: return False #cannot be used
+    if len(self.testList)==0: return False   #no sheet left
+    self.testName = self.testList.pop(0)
+    with self.datafile.open(self.testName) as myFile:
+      txt = io.TextIOWrapper(myFile, encoding="utf-8")
+      success = self.loadMicromaterials(txt)
+    return success
 
 
 
@@ -931,7 +1042,7 @@ class Indentation:
                   "redE_GPa":self.modulusRed[i], "A_um2":self.A_c[i], "hc_um":self.h_c[i], "E_GPa":self.modulus[i],\
                   "H_GPa":self.hardness[i],"segment":str(i+1)}
         results.update(self.meta)
-        df = pd.DataFrame(results, index=[self.fileName])
+        df = pd.DataFrame(results, index=[self.fileName+'-'+self.testName])
         dfAll = dfAll.append(df)
     dfAll['method'] = "Python"
     if "timeStamp" in dfAll.columns:
@@ -971,9 +1082,9 @@ class Indentation:
     ax1.plot(self.t[self.iDrift], self.p[self.iDrift], 'k.')
     ax1.axhline(0,color='C0', linestyle='dashed')
     ax2.axhline(0,color='C1', linestyle='dashed')
-    ax1.set_xlabel("time [sec]")
-    ax2.set_ylabel("depth [um]", color='C1', fontsize=14)
-    ax1.set_ylabel("force [mN]", color='C0', fontsize=14)
+    ax1.set_xlabel("time [$s$]")
+    ax2.set_ylabel("depth [$\mu m$]", color='C1', fontsize=14)
+    ax1.set_ylabel("force [$mN$]", color='C0', fontsize=14)
     plt.grid()
     plt.show()
     return
@@ -995,7 +1106,7 @@ class Indentation:
     ax.axhline(0,ls="dashed",c='k')
     ax.axvline(0,ls="dashed",c='k')
     ax.plot(self.h,self.p)
-    if self.method == Method.ISO:
+    if self.method != Method.CSM:
       _, _, maskUnload, optPar = self.stiffnessFromUnloading(self.p, self.h)
       h_, p_ = self.h[maskUnload], self.p[maskUnload]
       ax.plot(self.h[maskUnload], self.UnloadingPowerFunc(self.h[maskUnload],*optPar), 'C1', label='fit powerlaw' )
@@ -1009,8 +1120,8 @@ class Indentation:
         ax.plot(h_,   self.slope*h_+Sn, 'r--', lw=2, label='stiffness')
       ax.legend(loc=0, numpoints=1)
     ax.set_xlim(left=-0.03)
-    ax.set_xlabel("depth [um]")
-    ax.set_ylabel("force [mN]")
+    ax.set_xlabel("depth [$\mu m$]")
+    ax.set_ylabel("force [$mN$]")
     if saveFig:
       plt.savefig(self.fileName.split('.')[0]+".png", dpi=150, bbox_inches='tight')
     if show:
@@ -1050,16 +1161,117 @@ class Indentation:
       plt.ylabel("Stiffness Squared Over Load [GPa]")
     elif property == "h_c":
       plt.plot(self.h[self.valid], self.h_c, "o")
-      plt.ylabel("Contact depth [um]")
+      plt.ylabel("Contact depth [$\mu m$]")
     elif property == "A_c":
       plt.plot(self.h[self.valid], self.A_c, "o")
-      plt.ylabel("Contact area [um^2]")
+      plt.ylabel("Contact area [$\mu m^2$]")
     else:
       print("Unknown property")
       return
     plt.xlabel("depth "+r'$[\mu m]$')
     plt.show()
     return
+
+
+  #@}
+  ##
+  # @name CALIBRATION METHOD
+  #@{
+  def calibration(self,eTarget=72.0,minDepth=1.0,plotStiffness=False,plotTip=False):
+    """
+    Calibrate by first frame-stiffness and then area-function calibration
+
+    Args:
+       eTarget: target Young's modulus (not reduced), nu is known
+       minDepth: for frame stiffness calibration: what is the minimum depth
+       plotStiffness: plot stiffness graph with compliance
+       pltTip: plot tip shape after fitting
+    """
+    ## create data-frame of all files
+    dfAll = pd.DataFrame()
+    while True:
+      self.analyse()
+      dfAll = dfAll.append(self.getDataframe())
+      if len(self.testList)==0: break
+      self.nextMicromaterialsTest()
+
+    ## determine compliance by intersection of 1/sqrt(p) -- compliance curve
+    x = 1./np.sqrt(dfAll['pMax_mN'])
+    y = 1./dfAll['S_mN/um']
+    mask = dfAll['hMax_um'] > minDepth
+    param, covM = np.polyfit(x[mask],y[mask],1, cov=True)
+    print("fit f(x)=",round(param[0],5),"*x+",round(param[1],5))
+    frameStiff = 1./param[1]
+    frameCompliance = param[1]
+    print("  frame stiffness: %6.0f mN/um = %6.2e N/m"%(frameStiff,1000.*frameStiff))
+    stderrPercent = np.abs( np.sqrt(np.diag(covM)[1]) / param[1] * 100. )
+    print("  error in %:",round(stderrPercent,2) )
+    if plotStiffness:
+      plt.plot(x, y, '.',label='all')
+      plt.plot(x[mask], y[mask], '.',label='forFit')
+      x_ = np.linspace(0, np.max(x)*1.1, 50)
+      y_ = np.polyval(param, x_)
+      plt.plot(x_,y_,'-')
+      plt.plot([0,np.min(x)/2],[frameCompliance,frameCompliance],'k')
+      plt.text(np.min(x)/2,frameCompliance,'maschine compliance')
+      plt.xlabel("1/sqrt(p) [$mN^{-1/2}$]")
+      plt.ylabel("meas. compliance [$\mu m/mN$]")
+      plt.legend(loc=0)
+      plt.ylim(bottom=0)
+      plt.xlim(left=0)
+      plt.show()
+
+    ## re-create data-frame of all files
+    self.__init__(self.fileName, nuMat=self.nuMat, verbose=self.verbose)
+    self.tip.compliance = frameCompliance
+    dfNew = pd.DataFrame()
+    while True:
+      self.analyse()
+      dfNew = dfNew.append(self.getDataframe())
+      if len(self.testList)==0: break
+      if self.vendor == Vendor.Micromaterials:
+        self.nextMicromaterialsTest()
+      else:
+        print("NOT TESTED in calibration")
+        return
+
+    ## verify
+    totalCompliance = 1./np.array(dfAll['S_mN/um'])
+    contactStiffness = 1./(totalCompliance-frameCompliance) #mN/um
+    slope = np.array(dfNew['S_mN/um'])
+    print("Info: difference direct-indirect stiffness in %",round(np.linalg.norm((slope-contactStiffness)/slope)*100,2))
+    print("Should be small")
+
+    ## fit shape function
+    #reverse OliverPharrMethod to determine area function
+    EredGoal = self.ReducedModulus(eTarget, self.nuMat)
+    A = np.array( np.power( dfNew['S_mN/um']  / (2.0*EredGoal/np.sqrt(np.pi))  ,2))
+    h_c = np.array( dfNew['hMax_um'] - self.beta*dfNew['pMax_mN']/dfNew['S_mN/um'])
+    if plotTip:
+      rNonPerfect = np.sqrt(A/np.pi)
+    def fitFunct(params):     #error function
+      self.tip.prefactors = [params[x].value for x in params]+['iso']
+      A_temp = self.tip.areaFunction(h_c)
+      residual     = np.abs(A-A_temp)/len(A) #normalize by number of points
+      return residual
+    # Parameters, 'value' = initial condition, 'min' and 'max' = boundaries
+    params = lmfit.Parameters()
+    params.add('m0', value= 24.3, min=20.0, max=30.0)
+    for idx in range(1,3):
+      startVal = np.power(100,idx)
+      params.add('m'+str(idx), value= startVal, min=-startVal*100, max=startVal*100)
+    # do fit, here with leastsq model; args=(h_c, A)
+    result = lmfit.minimize(fitFunct, params, maxfev=10000)
+    self.tip.prefactors = [result.params[x].value for x in result.params]+['iso']
+    print("iterated prefactors",[round(i,1) for i in self.tip.prefactors[:-1]])
+    stderr = [result.params[x].stderr for x in result.params]
+    print("  standard error",[round(x,2) for x in stderr])
+
+    if plotTip:
+      plt.plot(rNonPerfect, h_c,'.')
+      self.tip.plotIndenterShape(maxDepth=1.5)
+    return
+
 
   #@}
   ##
@@ -1335,8 +1547,8 @@ class Tip:
     plt.plot(rNonPerfect, h_c, '-', label=tipLabel)
     plt.plot(rPerfect,h_c, '-k', label='Berkovich')
     plt.legend(loc="best")
-    plt.ylabel('depth '+r'$[\mu m]$')
-    plt.xlabel('contact radius '+r'$[\mu m]$')
+    plt.ylabel('depth [$\mu m$]')
+    plt.xlabel('contact radius [$\mu m$]')
     plt.xlim([0,maxDepth*4./3./zoom])
     plt.ylim([0,maxDepth/zoom])
     if show:

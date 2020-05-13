@@ -10,31 +10,31 @@ in this code (any nanoindentation code), since the area function is unit-depende
 \verbatim
 >>> from nanoIndent import Tip, Indentation
 >>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
->>> i = Indentation("Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)     
+>>> i = Indentation("Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
 =============  Examples/Agilent/ISO.xls  ============
-     Displacement Into Surface      : h                    
-     Load On Sample                 : p                    
-     Time On Sample                 : t                    
-     Stiffness                      : slope                
-     Modulus                        : modulus              
-     Hardness                       : hardness             
-     Contact Area                   : A_c                  
-     Contact Depth                  : h_c                  
+     Displacement Into Surface      : h
+     Load On Sample                 : p
+     Time On Sample                 : t
+     Stiffness                      : slope
+     Modulus                        : modulus
+     Hardness                       : hardness
+     Contact Area                   : A_c
+     Contact Depth                  : h_c
  *** Abs Val dPdt                   NOT USED
  *** dPdt                           NOT USED
      Frame Stiffness                : frameStiffness
      Load vs Disp Slope             : pVsHSlope
  *** Max Load                       NOT USED
  *** Points In Stiffness Fit        NOT USED
-     Raw Displacement               : hRaw                 
-     Raw Load                       : pRaw                 
-     Reduced Modulus                : modulusRed           
+     Raw Displacement               : hRaw
+     Raw Load                       : pRaw
+     Reduced Modulus                : modulusRed
  *** Segment Number                 NOT USED
  *** Segment Type                   NOT USED
-     Stiffness Squared Over Load    : k2p                  
-     Support Spring Stiffness       : slopeSupport         
-     Time                           : tTotal               
-     X Position                     : xCoarse              
+     Stiffness Squared Over Load    : k2p
+     Support Spring Stiffness       : slopeSupport
+     Time                           : tTotal
+     X Position                     : xCoarse
      Y Position                     : yCoarse
 >>> i.nuMat = 0.2
 >>> i.plot()                                        #doctest: +SKIP
@@ -46,7 +46,7 @@ Error in E:  1.087e-02 % between 1.294e+02 and 1.294e+02
 Error in H:  9.976e-04 % between 6.890e+00 and 6.890e+00
 >>> #calculate stiffness for single point and compare with reference
 >>> S,_,_,_ = i.stiffnessFromUnloading(i.p, i.h, plot=False)
-Number of unloading segments:1
+Number of unloading segments:1  Method:Method.ISO
 >>> print("Error: %.2e"%((i.slope[0] - S[0])/S[0]))
 Error: -3.23e-04
 
@@ -69,7 +69,7 @@ Information on the tip can be obtained by:
 >>> i = Indentation("Examples/Hysitron/Exp-50mN_0000.hld")      #tip data stored in file
 Open Hysitron file: Examples/Hysitron/Exp-50mN_0000.hld
 >>> i.analyse()                                            #data reading (command before), separeted from calculation to allow for adoptation of nu inbetween
-Number of unloading segments:1
+Number of unloading segments:1  Method:Method.ISO
 >>> i.plot()                                                    #doctest: +SKIP
 >>> i.verifyReadCalc(plot=False)  #possible but senseless since hC,E data not in file
 Error in hc: 0.000e+00 % between 3.306e-01 and 3.306e-01
@@ -88,7 +88,7 @@ compliance = 3,42 nm/mN.....t = Tip(compliance=3.42/1e3)
 >>> i = Indentation("Examples/Hysitron/RobinSteel0000LC.txt")      #tip data NOT stored in file
 Open Hysitron file: Examples/Hysitron/RobinSteel0000LC.txt
 >>> i.analyse()
-Number of unloading segments:1
+Number of unloading segments:1  Method:Method.ISO
 >>> i.plot()                                                    #doctest: +SKIP
 \endverbatim
 
@@ -100,83 +100,146 @@ Shape function of tip is unknown
 >>> from nanoIndent import Indentation
 >>> i   = Indentation("Examples/Agilent/CSM.xls", nuMat=0.18)
 =============  Examples/Agilent/CSM.xls  ============
-        Displacement Into Surface      : h                    
-        Load On Sample                 : p                    
-        Time On Sample                 : t                    
-        Harmonic Contact Stiffness     : slope                
-        Hardness                       : hardness             
-        Modulus                        : modulus              
-        Contact Area                   : A_c                  
-        Contact Depth                  : h_c                  
+        Displacement Into Surface      : h
+        Load On Sample                 : p
+        Time On Sample                 : t
+        Harmonic Contact Stiffness     : slope
+        Hardness                       : hardness
+        Modulus                        : modulus
+        Contact Area                   : A_c
+        Contact Depth                  : h_c
     *** CSM Status                     NOT USED
-        Harmonic Displacement          : hHarmonic            
+        Harmonic Displacement          : hHarmonic
     *** Harmonic Frequency             NOT USED
-        Harmonic Load                  : pHarmonic            
-        Harmonic Stiffness             : slopeInvalid         
-        Load vs Disp Slope             : pVsHSlope            
-        Phase Angle                    : phaseAngle           
-        Raw Displacement               : hRaw                 
-        Raw Load                       : pRaw                 
-        Reduced Modulus                : modulusRed           
-        Stiffness Squared Over Load    : k2p                  
-        Support Spring Stiffness       : slopeSupport         
-        Time                           : tTotal               
-        X Position                     : xCoarse              
-        Y Position                     : yCoarse              
+        Harmonic Load                  : pHarmonic
+        Harmonic Stiffness             : slopeInvalid
+        Load vs Disp Slope             : pVsHSlope
+        Phase Angle                    : phaseAngle
+        Raw Displacement               : hRaw
+        Raw Load                       : pRaw
+        Reduced Modulus                : modulusRed
+        Stiffness Squared Over Load    : k2p
+        Support Spring Stiffness       : slopeSupport
+        Time                           : tTotal
+        X Position                     : xCoarse
+        Y Position                     : yCoarse
 Tagged  ['Test 025 Tagged']
 >>> i.nuMat = 0.3
 >>> i.plotTestingMethod()               #can be used for all        #doctest: +SKIP
->>> i.plot()                            #CSM: no unloading is plotted    #doctest: +SKIP   
+>>> i.plot()                            #CSM: no unloading is plotted    #doctest: +SKIP
 
 \endverbatim
 - and repeat this for all sheets in the excel file, by executing i.nextTest and i.compareReadCalc again
 - Allow plotting in verifyReadCalc by omiting plot=False
 
 
+\subsection exampleCalibration Example: Calibration using MicroMaterials indentations
+Use a zip file of multiple indentations
+\verbatim
+>>> from nanoIndent import Tip, Indentation
+>>> i = Indentation("Examples/Micromaterials/multipleIndentations.zip", nuMat=0.17,verbose=1)
+>>> i.calibration()
+fit f(x)= 0.03556 *x+ 0.00054
+    frame stiffness:   1866 mN/um = 1.87e+06 N/m
+    error in %: 2.04
+Info: difference direct-indirect stiffness in % 0.33
+Should be small
+iterated prefactors [30.0, 1115.6, 81989.1]
+    standard error [1.13, 2578.27, 45269.4]
+
+\endverbatim
+Use i.calibration(plotStiffness=True,plotTip=True) for plotting
+
+
 \subsection exampleBasicPopin Example: Read G200 data and determine pop-in for all tests in file
 \verbatim
 >>> from nanoIndent import Indentation
->>> i = Indentation("Examples/Agilent/Popin.xls")             
+>>> i = Indentation("Examples/Agilent/Popin.xls")
 =============  Examples/Agilent/Popin.xls  ============
  *** Segment                        NOT USED
-     Displacement Into Surface      : h                    
-     Load On Sample                 : p                    
-     Time On Sample                 : t                    
-     Harmonic Contact Stiffness     : slope                
-     Hardness                       : hardness             
+     Displacement Into Surface      : h
+     Load On Sample                 : p
+     Time On Sample                 : t
+     Harmonic Contact Stiffness     : slope
+     Hardness                       : hardness
      Modulus                        : modulus
-Warning: no hold or unloading segments in data
 >>> while(len(i.testList)>0):
 ...   fPopIn, certainty = i.popIn(plot=False)
 ...   print(round(fPopIn,3),round(certainty["deltaSlope"],1))
 ...   void = i.nextAgilentTest()
 0.346 14.7
-Warning: no hold or unloading segments in data
 0.389 13.6
-Warning: no hold or unloading segments in data
 0.352 12.2
-Warning: no hold or unloading segments in data
 0.358 13.1
-Warning: no hold or unloading segments in data
 0.215 11.9
-Warning: no hold or unloading segments in data
 0.38 12.5
-Warning: no hold or unloading segments in data
 0.464 13.7
-Warning: no hold or unloading segments in data
 0.341 -1.0
-Warning: no hold or unloading segments in data
 0.537 18.5
-Warning: no hold or unloading segments in data
 0.229 11.7
-Warning: no hold or unloading segments in data
 0.537 17.6
-Warning: no hold or unloading segments in data
 
 \endverbatim
 One value has a negative difference in slope and is not dependable. Use plt.plot to plot the functions.
 
+\section exampleDataFrame looping through all tests and using dataframes
+\verbatim
+>>> import pandas as pd
+>>> import numpy as np
+>>> df = pd.DataFrame()
+>>> from nanoIndent import Tip, Indentation
+>>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
+>>> i = Indentation("Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
+=============  Examples/Agilent/ISO.xls  ============
+        Displacement Into Surface      : h
+        Load On Sample                 : p
+        Time On Sample                 : t
+        Stiffness                      : slope
+        Modulus                        : modulus
+        Hardness                       : hardness
+        Contact Area                   : A_c
+        Contact Depth                  : h_c
+    *** Abs Val dPdt                   NOT USED
+    *** dPdt                           NOT USED
+        Frame Stiffness                : frameStiffness
+        Load vs Disp Slope             : pVsHSlope
+    *** Max Load                       NOT USED
+    *** Points In Stiffness Fit        NOT USED
+        Raw Displacement               : hRaw
+        Raw Load                       : pRaw
+        Reduced Modulus                : modulusRed
+    *** Segment Number                 NOT USED
+    *** Segment Type                   NOT USED
+        Stiffness Squared Over Load    : k2p
+        Support Spring Stiffness       : slopeSupport
+        Time                           : tTotal
+        X Position                     : xCoarse
+        Y Position                     : yCoarse
+>>> i.plot()                                    #doctest: +SKIP
+>>> print("All tests remaining in file: ",i.testList)
+All tests remaining in file:  ['Test 024', 'Test 023', 'Test 022', 'Test 021', 'Test 020', 'Test 019', 'Test 018', 'Test 017', 'Test 016', 'Test 015', 'Test 014', 'Test 013', 'Test 012', 'Test 011', 'Test 010', 'Test 009', 'Test 008', 'Test 007', 'Test 006', 'Test 005', 'Test 004', 'Test 003', 'Test 002', 'Test 001']
+>>> print("Meta information",i.meta)
+Meta information {'Test': 25.0, 'Percent To Unload': 90, 'Surface Approach Velocity': 10, 'Depth Limit': 400, 'Delta X For Finding Surface': -50, 'Delta Y For Finding Surface': -50, 'Strain Rate Target': 0.05, 'Allowable Drift Rate': 0.05, 'Perform Drift Test Segment': 1.0, 'Approach Distance To Store': 1000, 'Peak Hold Time': 10, 'Surface Approach Distance': 1000, 'Surface Approach Sensitivity': 25, 'Poissons Ratio': 0.2}
+>>> df = df.append(i.getDataframe())
+>>> while len(i.testList):
+...   success = i.nextAgilentTest()
+...   df = df.append(i.getDataframe())
+>>> k2p = df['S_mN/um']**2/df['pMax_mN']
+>>> print('Mean and standard deviation:',round(np.mean(k2p)),round(np.std(k2p)))
+Mean and standard deviation: 2571.0 75.0
 
+\endverbatim
+ISO Agilent: Copper: 2570.9, 75.26
+
+'''
+from nanoIndent import Tip, Indentation
+i = Indentation("FS.xls", nuMat=0.18, tip=tip)
+while len(i.testList):
+    k2p = i.slope**2/i.p[i.valid]
+    print(round(np.mean(k2p),1), round(np.std(k2p),1) )
+    i.nextAgilentTest()
+'''
+CSM Method: 661.1 104.3
 
 \section Verification Short verification methods of Oliver-Pharr Method
 in addition to the ones mentioned before
@@ -227,7 +290,7 @@ Notes on plotAsDepth:
 Notes:
 - if you add "plot=True" to the line "i = Indent", then there will be nice plots
 - comparing these results to the results of Hysitron:
-  - differences in S and P are small <0.5% 
+  - differences in S and P are small <0.5%
   - differences in depths and reducedModulus are ok ~1% (Hysitron uses drift correction, not implemented yet)
   - differences in H and A are large ~2% (since depend on h^2)
 - Hysitron issues:
@@ -253,30 +316,30 @@ calculate depth, force and timeOnSample from raw data by identifying surface, dr
 >>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
 >>> i = Indentation("Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
 =============  Examples/Agilent/ISO.xls  ============
-     Displacement Into Surface      : h                    
-     Load On Sample                 : p                    
-     Time On Sample                 : t                    
-     Stiffness                      : slope                
-     Modulus                        : modulus              
-     Hardness                       : hardness             
-     Contact Area                   : A_c                  
-     Contact Depth                  : h_c                  
+     Displacement Into Surface      : h
+     Load On Sample                 : p
+     Time On Sample                 : t
+     Stiffness                      : slope
+     Modulus                        : modulus
+     Hardness                       : hardness
+     Contact Area                   : A_c
+     Contact Depth                  : h_c
  *** Abs Val dPdt                   NOT USED
  *** dPdt                           NOT USED
-     Frame Stiffness                : frameStiffness       
-     Load vs Disp Slope             : pVsHSlope            
+     Frame Stiffness                : frameStiffness
+     Load vs Disp Slope             : pVsHSlope
  *** Max Load                       NOT USED
  *** Points In Stiffness Fit        NOT USED
-     Raw Displacement               : hRaw                 
-     Raw Load                       : pRaw                 
-     Reduced Modulus                : modulusRed           
+     Raw Displacement               : hRaw
+     Raw Load                       : pRaw
+     Reduced Modulus                : modulusRed
  *** Segment Number                 NOT USED
  *** Segment Type                   NOT USED
-     Stiffness Squared Over Load    : k2p                  
-     Support Spring Stiffness       : slopeSupport         
-     Time                           : tTotal               
-     X Position                     : xCoarse              
-     Y Position                     : yCoarse              
+     Stiffness Squared Over Load    : k2p
+     Support Spring Stiffness       : slopeSupport
+     Time                           : tTotal
+     X Position                     : xCoarse
+     Y Position                     : yCoarse
 >>> i.tareDepthForce(compareRead=True)
 Drift rate: 0.037 nm/s
 Error in h: 0.06%
@@ -290,29 +353,29 @@ Error in t: 0.01%
 >>> from nanoIndent import Indentation
 >>> i = Indentation("Examples/Agilent/CSM.xls", nuMat=0.18)
 =============  Examples/Agilent/CSM.xls  ============
-        Displacement Into Surface      : h                    
-        Load On Sample                 : p                    
-        Time On Sample                 : t                    
-        Harmonic Contact Stiffness     : slope                
-        Hardness                       : hardness             
-        Modulus                        : modulus              
-        Contact Area                   : A_c                  
-        Contact Depth                  : h_c                  
+        Displacement Into Surface      : h
+        Load On Sample                 : p
+        Time On Sample                 : t
+        Harmonic Contact Stiffness     : slope
+        Hardness                       : hardness
+        Modulus                        : modulus
+        Contact Area                   : A_c
+        Contact Depth                  : h_c
     *** CSM Status                     NOT USED
-        Harmonic Displacement          : hHarmonic            
+        Harmonic Displacement          : hHarmonic
     *** Harmonic Frequency             NOT USED
-        Harmonic Load                  : pHarmonic            
-        Harmonic Stiffness             : slopeInvalid         
-        Load vs Disp Slope             : pVsHSlope            
-        Phase Angle                    : phaseAngle           
-        Raw Displacement               : hRaw                 
-        Raw Load                       : pRaw                 
-        Reduced Modulus                : modulusRed           
-        Stiffness Squared Over Load    : k2p                  
-        Support Spring Stiffness       : slopeSupport         
-        Time                           : tTotal               
-        X Position                     : xCoarse              
-        Y Position                     : yCoarse              
+        Harmonic Load                  : pHarmonic
+        Harmonic Stiffness             : slopeInvalid
+        Load vs Disp Slope             : pVsHSlope
+        Phase Angle                    : phaseAngle
+        Raw Displacement               : hRaw
+        Raw Load                       : pRaw
+        Reduced Modulus                : modulusRed
+        Stiffness Squared Over Load    : k2p
+        Support Spring Stiffness       : slopeSupport
+        Time                           : tTotal
+        X Position                     : xCoarse
+        Y Position                     : yCoarse
 Tagged  ['Test 025 Tagged']
 >>> while(len(i.testList)>0):
 ...   plt.plot(i.h, i.modulus,'b-')                #doctest: +SKIP
@@ -321,31 +384,31 @@ Tagged  ['Test 025 Tagged']
 >>> plt.ylabel("modulus [MPa]")                    #doctest: +SKIP
 >>> plt.grid()                                     #doctest: +SKIP
 >>> plt.show()                                     #doctest: +SKIP
->>> i = Indentation("Examples/Agilent/CSM.xls", nuMat=0.18) 
+>>> i = Indentation("Examples/Agilent/CSM.xls", nuMat=0.18)
 =============  Examples/Agilent/CSM.xls  ============
-        Displacement Into Surface      : h                    
-        Load On Sample                 : p                    
-        Time On Sample                 : t                    
-        Harmonic Contact Stiffness     : slope                
-        Hardness                       : hardness             
-        Modulus                        : modulus              
-        Contact Area                   : A_c                  
-        Contact Depth                  : h_c                  
+        Displacement Into Surface      : h
+        Load On Sample                 : p
+        Time On Sample                 : t
+        Harmonic Contact Stiffness     : slope
+        Hardness                       : hardness
+        Modulus                        : modulus
+        Contact Area                   : A_c
+        Contact Depth                  : h_c
     *** CSM Status                     NOT USED
-        Harmonic Displacement          : hHarmonic            
+        Harmonic Displacement          : hHarmonic
     *** Harmonic Frequency             NOT USED
-        Harmonic Load                  : pHarmonic            
-        Harmonic Stiffness             : slopeInvalid         
-        Load vs Disp Slope             : pVsHSlope            
-        Phase Angle                    : phaseAngle           
-        Raw Displacement               : hRaw                 
-        Raw Load                       : pRaw                 
-        Reduced Modulus                : modulusRed           
-        Stiffness Squared Over Load    : k2p                  
-        Support Spring Stiffness       : slopeSupport         
-        Time                           : tTotal               
-        X Position                     : xCoarse              
-        Y Position                     : yCoarse              
+        Harmonic Load                  : pHarmonic
+        Harmonic Stiffness             : slopeInvalid
+        Load vs Disp Slope             : pVsHSlope
+        Phase Angle                    : phaseAngle
+        Raw Displacement               : hRaw
+        Raw Load                       : pRaw
+        Reduced Modulus                : modulusRed
+        Stiffness Squared Over Load    : k2p
+        Support Spring Stiffness       : slopeSupport
+        Time                           : tTotal
+        X Position                     : xCoarse
+        Y Position                     : yCoarse
 Tagged  ['Test 025 Tagged']
 
 \endverbatim
