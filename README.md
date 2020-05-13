@@ -2,7 +2,7 @@
 
 Python tools for experimental micromechanics. Tools for:
 - SEM images
-- Nanoindentation (published later)
+- Nanoindentation
 - etc.
 
 # Installation
