@@ -30,10 +30,11 @@ jobs:
         cd src
         python -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
         python -m doctest -o 'NORMALIZE_WHITESPACE' nanoIndent.doctest
-        python ../doxygen/buildDoxy.py
     - name: Install and run doxygen
       run: |
         sudo apt-get install doxygen
+        cd src
+        python ../doxygen/buildDoxy.py
         doxygen ../doxygen/Doxyfile
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
