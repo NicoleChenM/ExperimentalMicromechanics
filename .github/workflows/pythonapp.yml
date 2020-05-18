@@ -34,8 +34,8 @@ jobs:
     - name: Build with doxygen
       uses: mattnotmitt/doxygen-action@v1
       with:
-          working-directory: '.'
-          doxyfile-path: '../doxygen/Doxyfile'
+          working-directory: 'src'
+          doxyfile-path: 'doxygen/Doxyfile'
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
