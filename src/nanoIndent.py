@@ -52,22 +52,20 @@ class FileType(Enum):
   Multi  = 2  #multiple tests in file
 
 class Indentation:
-  def __init__(self, fileName, nuMat= None, tip=None, verbose=2):
+  def __init__(self, fileName, nuMat= 0.3, tip=None, verbose=2):
     """
     Initialize indentation experiment data
 
     Args:
        fileName: fileName to open (.xls, .hld)
+       nuMat: material's Poisson ratio.
        tip:  tip class to use; None=perfect
        verbose: the higher, the more information printed: 2=default, 1=minimal, 0=print nothing
     """
-    if nuMat is None:
-      self.nuMat = 0.3
-    else:
-      self.nuMat = nuMat
+    self.nuMat = nuMat
     self.nuIndent = 0.07
     self.EIndent  = 1140                                    #GPa from Oliver,Pharr Method paper
-    self.beta = 0.75                                        #beta: shape coeffcient
+    self.beta = 0.75                                        #beta: contact depth coefficient
     self.verbose = verbose
     self.method    = Method.ISO                             #iso default: csm uses different methods
     if tip is None: tip = Tip()

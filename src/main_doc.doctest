@@ -5,11 +5,13 @@
 \mainpage Python for Experimental Micromechanics
 
 \section sem SEM images
-- Examples: \ref Tif.doxy
+- Tutorial: Tif.doxy
 - Documentation: Tif.Tif
 
 \section nanoindentation Nanoindentation
-To be published later
+- Tutorial: nanoIndent.doxy
+- Documentation: nanoIndent.Indentation and nanoIndent.Tip
+
 
 \section contact Contact information
 
