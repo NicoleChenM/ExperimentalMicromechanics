@@ -10,8 +10,8 @@ in this code (any nanoindentation code), since the area function is unit-depende
 \verbatim
 >>> from nanoIndent import Tip, Indentation
 >>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
->>> i = Indentation("Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
-=============  Examples/Agilent/ISO.xls  ============
+>>> i = Indentation("../Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
+=============  ../Examples/Agilent/ISO.xls  ============
      Displacement Into Surface      : h
      Load On Sample                 : p
      Time On Sample                 : t
@@ -66,8 +66,8 @@ Information on the tip can be obtained by:
 \subsection exampleBasic2: Example: Hysitron HLD file and ISO testing method
 \verbatim
 >>> from nanoIndent import Tip, Indentation
->>> i = Indentation("Examples/Hysitron/Exp-50mN_0000.hld")      #tip data stored in file
-Open Hysitron file: Examples/Hysitron/Exp-50mN_0000.hld
+>>> i = Indentation("../Examples/Hysitron/Exp-50mN_0000.hld")      #tip data stored in file
+Open Hysitron file: ../Examples/Hysitron/Exp-50mN_0000.hld
 >>> i.analyse()                                            #data reading (command before), separeted from calculation to allow for adoptation of nu inbetween
 Number of unloading segments:1  Method:Method.ISO
 >>> i.plot()                                                    #doctest: +SKIP
@@ -85,8 +85,8 @@ area function = 24.5, -3.7003e1, 5.2827e4, -2.8535e5, 4.8121e5, -2.4060e5
 compliance = 3,42 nm/mN.....t = Tip(compliance=3.42/1e3)
 \verbatim
 >>> from nanoIndent import Tip, Indentation
->>> i = Indentation("Examples/Hysitron/RobinSteel0000LC.txt")      #tip data NOT stored in file
-Open Hysitron file: Examples/Hysitron/RobinSteel0000LC.txt
+>>> i = Indentation("../Examples/Hysitron/RobinSteel0000LC.txt")      #tip data NOT stored in file
+Open Hysitron file: ../Examples/Hysitron/RobinSteel0000LC.txt
 >>> i.analyse()
 Number of unloading segments:1  Method:Method.ISO
 >>> i.plot()                                                    #doctest: +SKIP
@@ -98,8 +98,8 @@ Number of unloading segments:1  Method:Method.ISO
 Shape function of tip is unknown
 \verbatim
 >>> from nanoIndent import Indentation
->>> i   = Indentation("Examples/Agilent/CSM.xls", nuMat=0.18)
-=============  Examples/Agilent/CSM.xls  ============
+>>> i   = Indentation("../Examples/Agilent/CSM.xls", nuMat=0.18)
+=============  ../Examples/Agilent/CSM.xls  ============
         Displacement Into Surface      : h
         Load On Sample                 : p
         Time On Sample                 : t
@@ -137,25 +137,26 @@ Tagged  ['Test 025 Tagged']
 Use a zip file of multiple indentations
 \verbatim
 >>> from nanoIndent import Tip, Indentation
->>> i = Indentation("Examples/Micromaterials/multipleIndentations.zip", nuMat=0.17,verbose=1)
->>> i.calibration()
-fit f(x)= 0.03556 *x+ 0.00054
-    frame stiffness:   1866 mN/um = 1.87e+06 N/m
-    error in %: 2.04
-Info: difference direct-indirect stiffness in % 0.33
-Should be small
-iterated prefactors [30.0, 1115.6, 81989.1]
-    standard error [1.13, 2578.27, 45269.4]
+>>> i = Indentation("../Examples/Micromaterials/multipleIndentations.zip", nuMat=0.17,verbose=1)
+>>> i.calibration()                 #rounding differences can occur #doctest: +SKIP
 
 \endverbatim
+Typical values are:
+- fit f(x)= 0.03556 *x+ 0.00054
+-    frame stiffness:   1866 mN/um = 1.87e+06 N/m
+-    error in %: 2.04
+- Info: difference direct-indirect stiffness in % 0.33
+- Should be small
+- iterated prefactors [30.0, 1115.6, 81989.1]
+-     standard error [1.13, 2578.27, 45269.4]
 Use i.calibration(plotStiffness=True,plotTip=True) for plotting
 
 
 \subsection exampleBasicPopin Example: Read G200 data and determine pop-in for all tests in file
 \verbatim
 >>> from nanoIndent import Indentation
->>> i = Indentation("Examples/Agilent/Popin.xls")
-=============  Examples/Agilent/Popin.xls  ============
+>>> i = Indentation("../Examples/Agilent/Popin.xls")
+=============  ../Examples/Agilent/Popin.xls  ============
  *** Segment                        NOT USED
      Displacement Into Surface      : h
      Load On Sample                 : p
@@ -189,8 +190,8 @@ One value has a negative difference in slope and is not dependable. Use plt.plot
 >>> df = pd.DataFrame()
 >>> from nanoIndent import Tip, Indentation
 >>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
->>> i = Indentation("Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
-=============  Examples/Agilent/ISO.xls  ============
+>>> i = Indentation("../Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
+=============  ../Examples/Agilent/ISO.xls  ============
         Displacement Into Surface      : h
         Load On Sample                 : p
         Time On Sample                 : t
@@ -221,25 +222,19 @@ All tests remaining in file:  ['Test 024', 'Test 023', 'Test 022', 'Test 021', '
 >>> print("Meta information",i.meta)
 Meta information {'Test': 25.0, 'Percent To Unload': 90, 'Surface Approach Velocity': 10, 'Depth Limit': 400, 'Delta X For Finding Surface': -50, 'Delta Y For Finding Surface': -50, 'Strain Rate Target': 0.05, 'Allowable Drift Rate': 0.05, 'Perform Drift Test Segment': 1.0, 'Approach Distance To Store': 1000, 'Peak Hold Time': 10, 'Surface Approach Distance': 1000, 'Surface Approach Sensitivity': 25, 'Poissons Ratio': 0.2}
 >>> df = df.append(i.getDataframe())
->>> while len(i.testList):
-...   success = i.nextAgilentTest()
+>>> while True:
 ...   df = df.append(i.getDataframe())
+...   if len(i.testList)==0:
+...     break
+...   success = i.nextAgilentTest()
 >>> k2p = df['S_mN/um']**2/df['pMax_mN']
 >>> print('Mean and standard deviation:',round(np.mean(k2p)),round(np.std(k2p)))
-Mean and standard deviation: 2571.0 75.0
+Mean and standard deviation: 2575.0 77.0
 
 \endverbatim
-ISO Agilent: Copper: 2570.9, 75.26
+For Copper the K2P value is ~2500GPa while for Fused silica it is ~660GPa.
 
-'''
-from nanoIndent import Tip, Indentation
-i = Indentation("FS.xls", nuMat=0.18, tip=tip)
-while len(i.testList):
-    k2p = i.slope**2/i.p[i.valid]
-    print(round(np.mean(k2p),1), round(np.std(k2p),1) )
-    i.nextAgilentTest()
-'''
-CSM Method: 661.1 104.3
+
 
 \section Verification Short verification methods of Oliver-Pharr Method
 in addition to the ones mentioned before
@@ -314,8 +309,8 @@ calculate depth, force and timeOnSample from raw data by identifying surface, dr
 \verbatim
 >>> from nanoIndent import Indentation, Tip
 >>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
->>> i = Indentation("Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
-=============  Examples/Agilent/ISO.xls  ============
+>>> i = Indentation("../Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
+=============  ../Examples/Agilent/ISO.xls  ============
      Displacement Into Surface      : h
      Load On Sample                 : p
      Time On Sample                 : t
@@ -351,8 +346,8 @@ Error in t: 0.01%
 \subsection example1 Example: Read G200 xls file and plot sum, don't specify indenter because not important for analysis of existing data
 \verbatim
 >>> from nanoIndent import Indentation
->>> i = Indentation("Examples/Agilent/CSM.xls", nuMat=0.18)
-=============  Examples/Agilent/CSM.xls  ============
+>>> i = Indentation("../Examples/Agilent/CSM.xls", nuMat=0.18)
+=============  ../Examples/Agilent/CSM.xls  ============
         Displacement Into Surface      : h
         Load On Sample                 : p
         Time On Sample                 : t
@@ -384,8 +379,8 @@ Tagged  ['Test 025 Tagged']
 >>> plt.ylabel("modulus [MPa]")                    #doctest: +SKIP
 >>> plt.grid()                                     #doctest: +SKIP
 >>> plt.show()                                     #doctest: +SKIP
->>> i = Indentation("Examples/Agilent/CSM.xls", nuMat=0.18)
-=============  Examples/Agilent/CSM.xls  ============
+>>> i = Indentation("../Examples/Agilent/CSM.xls", nuMat=0.18)
+=============  ../Examples/Agilent/CSM.xls  ============
         Displacement Into Surface      : h
         Load On Sample                 : p
         Time On Sample                 : t

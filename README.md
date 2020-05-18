@@ -5,7 +5,15 @@ Python tools for experimental micromechanics. Tools for:
 - Nanoindentation
 - etc.
 
-# Installation
+# Installation (just files)
+1. Requirements
+numpy, matplotlib, scipy, Pillow, scikit-image, opencv-python
+```
+pip3 install numpy matplotlib scipy Pillow scikit-image opencv-python
+```
+2. Download files from 'src' folder and use
+
+# Installation (everything)
 1. Requirements
 numpy, matplotlib, scipy, Pillow, scikit-image, opencv-python
 ```
@@ -15,7 +23,7 @@ pip3 install numpy matplotlib scipy Pillow scikit-image opencv-python
 ```
 git clone git@jugit.fz-juelich.de:s.brinckmann/experimetal-micromechanics.git
 ```
-3. run doctest to verify that everything works. 
+3. run doctest to verify that everything works.
 E.g. to test the Tif class
 ```
 python3 -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest

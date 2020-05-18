@@ -245,7 +245,7 @@ class Tif:
     if self.bestLength<0.5:
       textString = str(int(self.bestLength*1000.))+" nm"
     else:
-      textString = str(int(self.bestLength))+" "+'\u03BC'+"m"
+      textString = str(int(self.bestLength))+" \u03BCm"
     textWidth, _ = draw.textsize( textString, font=font)
     logging.info("Scale used"+str(scale))
     if self.image.mode == "P":

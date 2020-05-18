@@ -99,15 +99,15 @@ class Indentation:
       # Micromaterials
       self.vendor = Vendor.Micromaterials
       self.fileType = FileType.Single
-      self.unloadPMax = 0.95
-      self.unloadPMin = 0.4
+      self.unloadPMax = 0.99
+      self.unloadPMin = 0.5
       success = self.loadMicromaterials(fileName)
     if fileName.endswith(".zip") and not success:
       # Micromaterials
       self.vendor = Vendor.Micromaterials
       self.fileType = FileType.Multi
-      self.unloadPMax = 0.95
-      self.unloadPMin = 0.4
+      self.unloadPMax = 0.99
+      self.unloadPMin = 0.5
       success = self.loadMicromaterialsZip(fileName)
     return
 
@@ -1213,7 +1213,7 @@ class Indentation:
       y_ = np.polyval(param, x_)
       plt.plot(x_,y_,'-')
       plt.plot([0,np.min(x)/2],[frameCompliance,frameCompliance],'k')
-      plt.text(np.min(x)/2,frameCompliance,'maschine compliance')
+      plt.text(np.min(x)/2,frameCompliance,'machine compliance')
       plt.xlabel("1/sqrt(p) [$mN^{-1/2}$]")
       plt.ylabel("meas. compliance [$\mu m/mN$]")
       plt.legend(loc=0)
@@ -1444,6 +1444,11 @@ class Tip:
     if plot:
       self.plotIndenterShape()
     return
+
+  def __repr__(self):
+    outString = 'Compliance: '+str(self.compliance)+'\n'
+    outString+= 'Prefactors: '+str(self.prefactors)+'\n'
+    return outString
 
 
   def areaFunction(self, hc):

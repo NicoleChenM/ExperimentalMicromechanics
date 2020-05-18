@@ -1,7 +1,7 @@
 ## small script for producing doxygen files from doctest files
 import os
 
-for fileName in os.listdir("."):
+for fileName in os.listdir("src"):
   if fileName.endswith(".doctest"):
     txtFile = open(fileName,'r')
     doxyFile= open(fileName[:-7]+"doxy",'w')

@@ -19,7 +19,7 @@ Example: Zeiss file
 \verbatim
 >>> from pprint import pprint
 >>> from Tif import Tif
->>> image = Tif("Examples/Tif/Zeiss.tif")
+>>> image = Tif("../Examples/Tif/Zeiss.tif")
 >>> image.show()                       #doctest: +SKIP
 >>> pprint(image.meta)                 #doctest: +SKIP
 >>> image.hist()                       #doctest: +SKIP
@@ -48,7 +48,7 @@ Example: Read Tif file from Imagic ImageAccess:
 image was taken with maginification = 5, which relates to a pixel size of 0.1um
 \verbatim
 >>> from Tif import Tif
->>> image = Tif("Examples/Tif/ImageAccess.tif",pixelSize=0.1)
+>>> image = Tif("../Examples/Tif/ImageAccess.tif",pixelSize=0.1)
     widthPixel 1360
     Pixel size 0.1 [um]
     Picture width 136.0 [um]
@@ -61,7 +61,7 @@ Example: Read Tif file Fibics NPVE
 Not automatically tested since it breaks the gitlab-server.
 \verbatim
 > from Tif import Tif
-> i = Tif("Examples/Tif/NPVE.tif","NPVE")   # giving the type (NPVE), speeds up things
+> i = Tif("../Examples/Tif/NPVE.tif","NPVE")   # giving the type (NPVE), speeds up things
 Picture width 83.227712427205 [um]
 Pixel size 0.004000178430606797 [um]
 widthPixel 20806
@@ -74,7 +74,7 @@ Example: Read Zeiss-Tif and correct curtains produced by FIB
 ====================================
 \verbatim
 >>> from Tif import Tif
->>> i = Tif('Examples/Tif/FibCurtains.tif')
+>>> i = Tif('../Examples/Tif/FibCurtains.tif')
 >>> i.addScaleBar()                 # scale bar is created
 >>> i.show()                        #doctest: +SKIP
 >>> i.crop(yMax=680)
