@@ -36,15 +36,43 @@ $(function() {
 </div>
 </div><!-- top -->
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Classes</a>  </div>
   <div class="headertitle">
 <div class="title">nanoIndent.py File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Classes to evaluate indentation data and indenter tip. </p>
+<p>Indentation data: indentation experiment</p><ul>
+<li>Methods: iso (can have multiple unloading segments), csm</li>
+<li>Vendor: Agilent, Hysitron</li>
+</ul>
+<p>Indenter tip: shape of indenter tip and gantry stiffness (that what you calibrate)</p>
+<p>UNITS: one should use mSB units in this code, since Agilent area function is unit-dependent mSB: [mN], [um], [GPa] (force, length, stress)</p>
+<p>Variables: differentiate different length ######## array of full length: force, time, depth, validMask, ... [used for plotting] array of valid length: E,H,Ac,hc, ... [only has the length where these values are valid] force[validMask] = pMax all these are vectors: OliverPharr et al methods are only vector functions</p>
+<p>Coding rules:</p><ul>
+<li>Change all variables: do not keep original-depth as can be reread and makes code less readable </li>
+</ul>
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1FileType.html">nanoIndent.FileType</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html">nanoIndent.Indentation</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Method.html">nanoIndent.Method</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Tip.html">nanoIndent.Tip</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Vendor.html">nanoIndent.Vendor</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 </div><!-- contents -->
 
 <hr class="footer"/><address class="footer"><small>
 Copyright by Steffen Brinckmann
-<!--Generated on Mon May 18 2020 17:16:53 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
+<!--Generated on Mon May 18 2020 17:20:28 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13 -->
 </small></address>
