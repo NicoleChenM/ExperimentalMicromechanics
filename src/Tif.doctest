@@ -58,7 +58,7 @@ image was taken with maginification = 5, which relates to a pixel size of 0.1um
 
 Example: Read Tif file Fibics NPVE
 ====================================
-Not automatically tested since it breaks the gitlab-server.
+Not automatically tested since it breaks the gitlab-server and github does not allow it due to its size.
 \verbatim
 > from Tif import Tif
 > i = Tif("../Examples/Tif/NPVE.tif","NPVE")   # giving the type (NPVE), speeds up things

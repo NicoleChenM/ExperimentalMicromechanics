@@ -2,7 +2,7 @@ test:doctest:
     image: python:3.6
     script:
         - pip install numpy matplotlib scipy Pillow scikit-image opencv-python
-        - pip install pandas lmfit
+        - pip install pandas lmfit xlrd
         - cd src
         - python -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
         - python -m doctest -o 'NORMALIZE_WHITESPACE' nanoIndent.doctest
