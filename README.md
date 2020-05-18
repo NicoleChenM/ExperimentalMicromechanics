@@ -5,6 +5,8 @@ Python tools for experimental micromechanics. Tools for:
 - Nanoindentation
 - etc.
 
+Documentation, Tutorials are at [github-pages](https://steffenbrinckmann.github.io/ExperimentalMicromechanics/)
+
 # Installation (just files)
 1. Requirements
 numpy, matplotlib, scipy, Pillow, scikit-image, opencv-python
@@ -12,6 +14,7 @@ numpy, matplotlib, scipy, Pillow, scikit-image, opencv-python
 pip3 install numpy matplotlib scipy Pillow scikit-image opencv-python
 ```
 2. Download files from 'src' folder and use
+
 
 # Installation (everything)
 1. Requirements
@@ -31,17 +34,8 @@ python3 -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
 4. create documentation (optional)
   - install doxygen
   - install doxypypy "pip3 install doxypypy"
-  - create py_filter in a local binary directory: e.g. .local/bin
-  ```
-  #!/bin/bash
-  python3 -m doxypypy.doxypypy -a -c $1
-  ```
   - run "python3 buildDoxy.py"
   - run "doxygen doxygen/Doxyfile"
-
-# Usage
-See doctest files for usage.
-
 
 # Contact information
 ```
