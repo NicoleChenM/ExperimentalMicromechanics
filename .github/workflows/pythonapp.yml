@@ -29,3 +29,15 @@ jobs:
       run: |
         cd src
         python -m doctest -o 'NORMALIZE_WHITESPACE' Tif.doctest
+        python -m doctest -o 'NORMALIZE_WHITESPACE' nanoIndent.doctest
+        python ../doxygen/buildDoxy.py
+    - name: Build with doxygen
+      uses: mattnotmitt/doxygen-action@v1
+      with:
+          working-directory: '.'
+          doxyfile-path: '../doxygen/Doxyfile'
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./public
