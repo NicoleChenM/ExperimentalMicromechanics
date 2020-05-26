@@ -955,6 +955,7 @@ class Indentation:
       ## self.t -= self.t[idx] #do not offset time since segment times are given
       self.h -= hZero
       self.p -= pZero
+    inFile.close()
     return True
 
 

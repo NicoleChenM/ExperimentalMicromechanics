@@ -75,15 +75,14 @@ class Tif:
     self.origImage = self.image.copy()
 
     #parse for information
-    fileHandle = open(self.fileName,'r', encoding='iso-8859-1')
     self.meta['measurementType'] = 'Zeiss SEM TIF-Image'
-    for line in fileHandle:
-      if " = " in line:
-        key, value = line.split("=")
-        key = key.strip().replace(' ','_')
-        value=value.strip()
-        self.meta[key]=value
-    fileHandle.close()
+    with open(self.fileName,'r', encoding='iso-8859-1') as fIn:
+      for line in fIn:
+        if " = " in line:
+          key, value = line.split("=")
+          key = key.strip().replace(' ','_')
+          value=value.strip()
+          self.meta[key]=value
 
     # meta data checks and handling
     valueArray = self.meta['Width'].split()
@@ -121,12 +120,12 @@ class Tif:
     self.widthPixel, self.heightPixel = imgArray.shape
 
     #parse the xml line in the file
-    fileHandle = open(self.fileName,'r', encoding='iso-8859-1')
     xmlLine = ""
-    for line in fileHandle:
-      if '<Fibics version="1.0">' in line:
-        xmlLine = line
-        break
+    with open(self.fileName,'r', encoding='iso-8859-1') as fIn:
+      for line in fileHandle:
+        if '<Fibics version="1.0">' in line:
+          xmlLine = line
+          break
     xmlLine  = re.sub(r'[^\x00-\x7F]+',' ', xmlLine)  #clean off any non-ascii characters
     xmlData  = minidom.parseString(xmlLine)           #parse it
     xmlObject= xmlData.documentElement		       #make an object
