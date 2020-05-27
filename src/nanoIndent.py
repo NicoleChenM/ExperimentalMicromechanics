@@ -25,7 +25,7 @@
 # 3. see separate file nanoIndentCalibrationMethods
 #    - fit: besser gleich A_c = f(h_c) direct zu fitten weil beide bekannt
 #    - better calibration methods
-import math, io, lmfit, re
+import math, io, lmfit, re, os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -79,6 +79,9 @@ class Indentation:
     #initialize and load first data set
     #set default parameters
     success = False
+    if not os.path.exists(fileName) and fileName!='':
+      print("**ERROR __init__: file does not exist",fileName)
+      return None
     if fileName.endswith(".xls"):
       # KLA, Agilent, Keysight, MTS
       self.vendor = Vendor.Agilent
@@ -575,7 +578,7 @@ class Indentation:
       return
     rate = self.p[1:]-self.p[:-1]
     #using histogram, define masks for loading and unloading
-    hist,bins= np.histogram(rate , bins=1000)
+    hist,bins= np.histogram(rate , bins=100) #TODO Better algorithm: 1000 is good for FischerScope, but leads to other failures
     binCenter = (bins[1:]+bins[:-1])/2
     peaks = np.where(hist>10)[0]                  #peaks with more than 10 items
     zeroID = np.argmin(np.abs(binCenter[peaks]))  #id which is closest to zero
@@ -1002,7 +1005,7 @@ class Indentation:
         if self.verbose>1: print("Open Micromaterials file: "+self.fileName)
         self.meta = {'measurementType': 'Micromaterials Indentation TXT'}
     except:
-      if self.verbose>1: 
+      if self.verbose>1:
         print("Is not a Micromaterials file")
       return False
 
@@ -1048,7 +1051,7 @@ class Indentation:
 
   def loadFischerScope(self,fileName):
     """
-    Initialize txt-file from Fischer-Scope for processing 
+    Initialize txt-file from Fischer-Scope for processing
 
     Args:
       fileName: file name

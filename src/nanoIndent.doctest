@@ -156,6 +156,8 @@ Use i.calibration(plotStiffness=True,plotTip=True) for plotting
 \verbatim
 >>> from nanoIndent import Tip, Indentation
 >>> i = Indentation("../Examples/FischerScope/FS1.txt", nuMat=0.17,verbose=1)
+**ERROR identifyLoadHoldUnloadCSM in identify load-hold-unloading cycles
+0 1053 1053 1078 1079 1080
 >>> i.analyse()
 >>> i.plot()                                    #doctest: +SKIP
 
