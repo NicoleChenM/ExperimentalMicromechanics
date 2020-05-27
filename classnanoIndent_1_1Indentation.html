@@ -117,15 +117,12 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9f88df7bf1887ac9d54da071812a5cef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">FILE HANDLING; PLOTTING</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>Access to class variables</p>
-<p>Initialize G200 excel file for processing</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">fileName</td><td>file name </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Wrapper for all next test for all vendors </p>
 </div></td></tr>
+<tr class="memitem:a746e43b093e68dd90235c09a907282a2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#a746e43b093e68dd90235c09a907282a2">nextTest</a> (self)</td></tr>
+<tr class="separator:a746e43b093e68dd90235c09a907282a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae780b8be2b29a438e5a39d67612dac71"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#ae780b8be2b29a438e5a39d67612dac71">loadAgilent</a> (self, <a class="el" href="classnanoIndent_1_1Indentation.html#a4c597979dd59d71fe1fdffef42c0da0c">fileName</a>)</td></tr>
+<tr class="memdesc:ae780b8be2b29a438e5a39d67612dac71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize G200 excel file for processing.  <a href="#ae780b8be2b29a438e5a39d67612dac71">More...</a><br /></td></tr>
 <tr class="separator:ae780b8be2b29a438e5a39d67612dac71"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac81a46d54da3ee9047e87568bdfe39aa"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#ac81a46d54da3ee9047e87568bdfe39aa">nextAgilentTest</a> (self)</td></tr>
 <tr class="memdesc:ac81a46d54da3ee9047e87568bdfe39aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Go to next sheet in worksheet and prepare indentation data.  <a href="#ac81a46d54da3ee9047e87568bdfe39aa">More...</a><br /></td></tr>
@@ -142,6 +139,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab729cd1e8e171fb63eb5c2bc34c45207"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#ab729cd1e8e171fb63eb5c2bc34c45207">nextMicromaterialsTest</a> (self)</td></tr>
 <tr class="memdesc:ab729cd1e8e171fb63eb5c2bc34c45207"><td class="mdescLeft">&#160;</td><td class="mdescRight">Go to next file in zip-file.  <a href="#ab729cd1e8e171fb63eb5c2bc34c45207">More...</a><br /></td></tr>
 <tr class="separator:ab729cd1e8e171fb63eb5c2bc34c45207"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11c5f9d91f7782824952cd19fb09404f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#a11c5f9d91f7782824952cd19fb09404f">loadFischerScope</a> (self, <a class="el" href="classnanoIndent_1_1Indentation.html#a4c597979dd59d71fe1fdffef42c0da0c">fileName</a>)</td></tr>
+<tr class="memdesc:a11c5f9d91f7782824952cd19fb09404f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize txt-file from Fischer-Scope for processing.  <a href="#a11c5f9d91f7782824952cd19fb09404f">More...</a><br /></td></tr>
+<tr class="separator:a11c5f9d91f7782824952cd19fb09404f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9650d3c2be47d8d6f1114d09abb4aa94"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#a9650d3c2be47d8d6f1114d09abb4aa94">nextFischerScopeTest</a> (self)</td></tr>
+<tr class="memdesc:a9650d3c2be47d8d6f1114d09abb4aa94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Go to next dataframe.  <a href="#a9650d3c2be47d8d6f1114d09abb4aa94">More...</a><br /></td></tr>
+<tr class="separator:a9650d3c2be47d8d6f1114d09abb4aa94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Output and plotting</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>save all results to dataframe variable for easy proccessing </p>
 </div></td></tr>
@@ -643,6 +646,50 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Initialize G200 excel file for processing. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fileName</td><td>file name </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a11c5f9d91f7782824952cd19fb09404f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11c5f9d91f7782824952cd19fb09404f">&#9670;&nbsp;</a></span>loadFischerScope()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def nanoIndent.Indentation.loadFischerScope </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>fileName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize txt-file from Fischer-Scope for processing. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fileName</td><td>file name </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
 <a id="af08191f939bb46f8a549a54dca28192e"></a>
@@ -791,6 +838,26 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a9650d3c2be47d8d6f1114d09abb4aa94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9650d3c2be47d8d6f1114d09abb4aa94">&#9670;&nbsp;</a></span>nextFischerScopeTest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def nanoIndent.Indentation.nextFischerScopeTest </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Go to next dataframe. </p>
+
+</div>
+</div>
 <a id="ab729cd1e8e171fb63eb5c2bc34c45207"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab729cd1e8e171fb63eb5c2bc34c45207">&#9670;&nbsp;</a></span>nextMicromaterialsTest()</h2>
 
@@ -808,6 +875,24 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Go to next file in zip-file. </p>
+
+</div>
+</div>
+<a id="a746e43b093e68dd90235c09a907282a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a746e43b093e68dd90235c09a907282a2">&#9670;&nbsp;</a></span>nextTest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def nanoIndent.Indentation.nextTest </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1313,7 +1398,7 @@ as reducedModulus E*, A, h_c </dd></dl>
 
 <hr class="footer"/><address class="footer"><small>
 Copyright by Steffen Brinckmann
-<!--Generated on Tue May 19 2020 09:11:18 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
+<!--Generated on Wed May 27 2020 15:52:01 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13 -->
 </small></address>

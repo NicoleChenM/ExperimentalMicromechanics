@@ -77,6 +77,8 @@ Basic tutorials for G200 and Hysitron</h1>
      Time                           : tTotal
      X Position                     : xCoarse
      Y Position                     : yCoarse
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+Number Unloading segments 1
 &gt;&gt;&gt; i.nuMat = 0.2
 &gt;&gt;&gt; i.plot()                                        
 &gt;&gt;&gt; i.verifyReadCalc(plot=False)
@@ -119,6 +121,8 @@ Error in H:  0.000e+00 % between 3.068e+01 and 3.068e+01</pre><h2><a class="anch
 <p>area function = 24.5, -3.7003e1, 5.2827e4, -2.8535e5, 4.8121e5, -2.4060e5 compliance = 3,42 nm/mN.....t = Tip(compliance=3.42/1e3) </p><pre class="fragment">&gt;&gt;&gt; from nanoIndent import Tip, Indentation
 &gt;&gt;&gt; i = Indentation("../Examples/Hysitron/RobinSteel0000LC.txt")      #tip data NOT stored in file
 Open Hysitron file: ../Examples/Hysitron/RobinSteel0000LC.txt
+**WARNING identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED
+Number Unloading segments 1
 &gt;&gt;&gt; i.analyse()
 Number of unloading segments:1  Method:Method.ISO
 &gt;&gt;&gt; i.plot()                                                    
@@ -170,6 +174,15 @@ Example: Calibration using MicroMaterials indentations</h2>
 <li>iterated prefactors [30.0, 1115.6, 81989.1]</li>
 <li>standard error [1.13, 2578.27, 45269.4] Use i.calibration(plotStiffness=True,plotTip=True) for plotting</li>
 </ul>
+<h2><a class="anchor" id="exampleFischer"></a>
+Example: Fischer-Scope</h2>
+<pre class="fragment">&gt;&gt;&gt; from nanoIndent import Tip, Indentation
+&gt;&gt;&gt; i = Indentation("../Examples/FischerScope/FS1.txt", nuMat=0.17,verbose=1)
+&gt;&gt;&gt; i.analyse()
+&gt;&gt;&gt; i.plot()                                    </pre><p>Issues:</p><ul>
+<li>unloading range: lower bound is 50% at 50% unloading amount; lower bound is 21% at 90% unloading amount</li>
+<li>unloading range: upper bound is very chaotic changing for different materials even for the same unloading amounts</li>
+</ul>
 <h2><a class="anchor" id="exampleBasicPopin"></a>
 Example: Read G200 data and determine pop-in for all tests in file</h2>
 <pre class="fragment">&gt;&gt;&gt; from nanoIndent import Indentation
@@ -204,32 +217,8 @@ looping through all tests and using dataframes</h1>
 &gt;&gt;&gt; df = pd.DataFrame()
 &gt;&gt;&gt; from nanoIndent import Tip, Indentation
 &gt;&gt;&gt; tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
-&gt;&gt;&gt; i = Indentation("../Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip)
-=============  ../Examples/Agilent/ISO.xls  ============
-        Displacement Into Surface      : h
-        Load On Sample                 : p
-        Time On Sample                 : t
-        Stiffness                      : slope
-        Modulus                        : modulus
-        Hardness                       : hardness
-        Contact Area                   : A_c
-        Contact Depth                  : h_c
-    *** Abs Val dPdt                   NOT USED
-    *** dPdt                           NOT USED
-        Frame Stiffness                : frameStiffness
-        Load vs Disp Slope             : pVsHSlope
-    *** Max Load                       NOT USED
-    *** Points In Stiffness Fit        NOT USED
-        Raw Displacement               : hRaw
-        Raw Load                       : pRaw
-        Reduced Modulus                : modulusRed
-    *** Segment Number                 NOT USED
-    *** Segment Type                   NOT USED
-        Stiffness Squared Over Load    : k2p
-        Support Spring Stiffness       : slopeSupport
-        Time                           : tTotal
-        X Position                     : xCoarse
-        Y Position                     : yCoarse
+&gt;&gt;&gt; i = Indentation("../Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip, verbose=1)
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 &gt;&gt;&gt; i.plot()                                    
 &gt;&gt;&gt; print("All tests remaining in file: ",i.testList)
 All tests remaining in file:  ['Test 024', 'Test 023', 'Test 022', 'Test 021', 'Test 020', 'Test 019', 'Test 018', 'Test 017', 'Test 016', 'Test 015', 'Test 014', 'Test 013', 'Test 012', 'Test 011', 'Test 010', 'Test 009', 'Test 008', 'Test 007', 'Test 006', 'Test 005', 'Test 004', 'Test 003', 'Test 002', 'Test 001']
@@ -241,6 +230,20 @@ Meta information {'Test': 25.0, 'Percent To Unload': 90, 'Surface Approach Veloc
 ...   if len(i.testList)==0:
 ...     break
 ...   success = i.nextAgilentTest()
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 &gt;&gt;&gt; k2p = df['S_mN/um']**2/df['pMax_mN']
 &gt;&gt;&gt; print('Mean and standard deviation:',round(np.mean(k2p)),round(np.std(k2p)))
 Mean and standard deviation: 2575.0 77.0</pre><p> For Copper the K2P value is ~2500GPa while for Fused silica it is ~660GPa.</p>
@@ -339,9 +342,11 @@ Example: Tare time, depth, force</h2>
      Time                           : tTotal
      X Position                     : xCoarse
      Y Position                     : yCoarse
+**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+Number Unloading segments 1
 &gt;&gt;&gt; i.tareDepthForce(compareRead=True)
-Drift rate: 0.037 nm/s
-Error in h: 0.06%
+Drift rate: -0.396 nm/s
+Error in h: 1.86%
 Error in p: 0.01%
 Error in t: 0.01%
 &gt;&gt;&gt; i.tareDepthForce(compareRead=False,plot=True)
@@ -427,7 +432,7 @@ Compare indenter shapes</h2>
 
 <hr class="footer"/><address class="footer"><small>
 Copyright by Steffen Brinckmann
-<!--Generated on Tue May 19 2020 09:11:18 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
+<!--Generated on Wed May 27 2020 15:52:01 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13 -->
 </small></address>
