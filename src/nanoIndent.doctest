@@ -229,7 +229,10 @@ Meta information {'Test': 25.0, 'Percent To Unload': 90, 'Surface Approach Veloc
 **WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 **WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 **WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: Repair required
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
 **WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 **WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 >>> k2p = df['S_mN/um']**2/df['pMax_mN']

@@ -630,6 +630,7 @@ class Indentation:
       plt.plot(unloadIdx[::2],self.p[unloadIdx[::2]],'o',label='unload',markersize=8)
       plt.plot(unloadIdx[1::2],self.p[unloadIdx[1::2]],'o',label='unload-end',markersize=6)
       plt.legend(loc=0)
+      plt.title("BEFORE Cleaning")
       plt.xlabel('time incr. []')
       plt.ylabel('force [$mN$]')
       plt.show()
@@ -639,6 +640,20 @@ class Indentation:
     while len(loadIdx)<len(unloadIdx) and unloadIdx[-3]>loadIdx[-1]:
       print("**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED")
       unloadIdx = unloadIdx[:-2]
+    while len(loadIdx)>len(unloadIdx) and loadIdx[3]<unloadIdx[1]:
+      print("**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED")
+      loadIdx = loadIdx[2:]
+    if plot:     # verify visually
+      plt.plot(self.p)
+      plt.plot(loadIdx[::2],  self.p[loadIdx[::2]],  'o',label='load',markersize=12)
+      plt.plot(loadIdx[1::2], self.p[loadIdx[1::2]], 'o',label='hold',markersize=10)
+      plt.plot(unloadIdx[::2],self.p[unloadIdx[::2]],'o',label='unload',markersize=8)
+      plt.plot(unloadIdx[1::2],self.p[unloadIdx[1::2]],'o',label='unload-end',markersize=6)
+      plt.legend(loc=0)
+      plt.title("AFTER Cleaning")
+      plt.xlabel('time incr. []')
+      plt.ylabel('force [$mN$]')
+      plt.show()
     if len(loadIdx)!=len(unloadIdx):
       print("**WARNING identifyLoadHoldUnload: Repair required")
       #TODO Repair possibly that this is not required
