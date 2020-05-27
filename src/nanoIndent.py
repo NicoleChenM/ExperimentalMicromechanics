@@ -25,9 +25,9 @@
 # 3. see separate file nanoIndentCalibrationMethods
 #    - fit: besser gleich A_c = f(h_c) direct zu fitten weil beide bekannt
 #    - better calibration methods
+import math, io, lmfit, re
 import numpy as np
 import pandas as pd
-import math, io, lmfit
 import matplotlib.pyplot as plt
 from enum import Enum
 from scipy.optimize import differential_evolution, fmin_tnc, fmin_l_bfgs_b, curve_fit, OptimizeResult, newton
@@ -46,6 +46,7 @@ class Vendor(Enum):
   HysiHLD = 2
   HysiTXT = 3
   Micromaterials = 4
+  FischerScope = 5
 
 class FileType(Enum):
   Single = 1  #single test in file
@@ -107,6 +108,13 @@ class Indentation:
       self.unloadPMax = 0.99
       self.unloadPMin = 0.5
       success = self.loadMicromaterialsZip(fileName)
+    if fileName.endswith(".txt") and not success:
+      # Fischer Scope
+      self.vendor = Vendor.FischerScope
+      self.fileType = FileType.Multi
+      self.unloadPMax = 0.95
+      self.unloadPMin = 0.21
+      success = self.loadFischerScope(fileName)
     return
 
   ##
@@ -225,7 +233,7 @@ class Indentation:
     for cycle in self.iLHU:
       loadStart, loadEnd, unloadStart, unloadEnd = cycle
       if loadStart>loadEnd or loadEnd>unloadStart or unloadStart>unloadEnd:
-        print('**ERROR: indicies not in order:',cycle)
+        print('**ERROR stiffnessFromUnloading: indicies not in order:',cycle)
       maskSegment = np.zeros_like(h, dtype=np.bool)
       maskSegment[unloadStart:unloadEnd+1] = True
       maskForce   = np.logical_and(P<P[loadEnd]*self.unloadPMax, P>P[loadEnd]*self.unloadPMin)
@@ -567,7 +575,7 @@ class Indentation:
       return
     rate = self.p[1:]-self.p[:-1]
     #using histogram, define masks for loading and unloading
-    hist,bins= np.histogram(rate , bins=100)
+    hist,bins= np.histogram(rate , bins=1000)
     binCenter = (bins[1:]+bins[:-1])/2
     peaks = np.where(hist>10)[0]                  #peaks with more than 10 items
     zeroID = np.argmin(np.abs(binCenter[peaks]))  #id which is closest to zero
@@ -576,6 +584,12 @@ class Indentation:
                      binCenter[zeroID]-binCenter[zeroID-1])/2
     loadMask  = rate>(zeroValue+zeroDelta)
     unloadMask= rate<(zeroValue-zeroDelta)
+    if plot:     # verify visually
+      plt.bar(binCenter,hist)
+      plt.axvline(zeroValue)
+      plt.axvline(zeroValue+zeroDelta, linestyle='dashed')
+      plt.axvline(zeroValue-zeroDelta, linestyle='dashed')
+      plt.show()
     #clean small fluctuations
     size = 7
     loadMask = ndimage.binary_closing(loadMask, structure=np.ones((size,)) )
@@ -587,24 +601,20 @@ class Indentation:
     unloadMask= np.r_[False,unloadMask,False]
     loadIdx   = np.flatnonzero(loadMask[1:]   != loadMask[:-1])
     unloadIdx = np.flatnonzero(unloadMask[1:] != unloadMask[:-1])
-    if len(loadIdx)!=len(unloadIdx):
-      #TODO Repair possibly that this is not required
-      self.identifyLoadHoldUnloadCSM()
-      return
-    #plot
-    if plot:
-      print("Verify that next two arrays same length")
-      print(loadIdx)
-      print(unloadIdx)
+    if plot:     # verify visually
       plt.plot(self.p)
-      plt.plot(loadIdx[::2],  self.p[loadIdx[::2]],  'o',label='load',markersize=5)
-      plt.plot(loadIdx[1::2], self.p[loadIdx[1::2]], 'o',label='hold')
-      plt.plot(unloadIdx[::2],self.p[unloadIdx[::2]],'o',label='unload')
-      plt.plot(unloadIdx[1::2],self.p[unloadIdx[1::2]],'o',label='unload-end',markersize=5)
+      plt.plot(loadIdx[::2],  self.p[loadIdx[::2]],  'o',label='load',markersize=12)
+      plt.plot(loadIdx[1::2], self.p[loadIdx[1::2]], 'o',label='hold',markersize=10)
+      plt.plot(unloadIdx[::2],self.p[unloadIdx[::2]],'o',label='unload',markersize=8)
+      plt.plot(unloadIdx[1::2],self.p[unloadIdx[1::2]],'o',label='unload-end',markersize=6)
       plt.legend(loc=0)
       plt.xlabel('time incr. []')
       plt.ylabel('force [$mN$]')
       plt.show()
+    if len(loadIdx)!=len(unloadIdx):
+      #TODO Repair possibly that this is not required
+      self.identifyLoadHoldUnloadCSM()
+      return
     self.iLHU = []
     for i,_ in enumerate(loadIdx[::2]):
       self.iLHU.append([loadIdx[::2][i],loadIdx[1::2][i],unloadIdx[::2][i],unloadIdx[1::2][i]])
@@ -640,7 +650,7 @@ class Indentation:
         iDriftS   = len(self.p)-2
         iDriftE   = len(self.p)-1
       if not (iSurface<iLoad and iLoad<iHold and iHold<iDriftS and iDriftS<iDriftE and iDriftE<len(self.h)):
-        print("**ERROR in identify load-hold-unloading cycles")
+        print("**ERROR identifyLoadHoldUnloadCSM in identify load-hold-unloading cycles")
         print(iSurface,iLoad,iHold,iDriftS,iDriftE, len(self.h))
     else:  #This part is required
       if self.method != Method.CSM:
@@ -659,6 +669,21 @@ class Indentation:
   # @name FILE HANDLING; PLOTTING
   # Access to class variables
   #@{
+  def nextTest(self):
+    """
+    Wrapper for all next test for all vendors
+    """
+    if self.vendor == Vendor.Agilent:
+      self.nextAgilentTest()
+    elif self.vendor == Vendor.Micromaterials:
+      self.nextMicromaterialsTest()
+    elif self.vendor == Vendor.FischerScope:
+      self.nextFischerScopeTest()
+    else:
+      print("No multiple tests in file")
+    return
+
+
   def loadAgilent(self, fileName):
     """
     Initialize G200 excel file for processing
@@ -784,7 +809,8 @@ class Indentation:
     if self.fileName.endswith('.hld'):
       line = inFile.readline()
       if not "File Version: Hysitron" in line:
-         #not a Hysitron file
+        #not a Hysitron file
+        inFile.close()
         return False
       if self.verbose>1: print("Open Hysitron file: "+self.fileName)
 
@@ -880,6 +906,7 @@ class Indentation:
       line3 = inFile.readline()
       self.meta = {'measurementType': 'Hysitron Indentation TXT', 'dateMeasurement':line0.strip()}
       if line1 != "\n" or "Number of Points" not in line2 or not "Depth (nm)" in line3:
+        inFile.close()
         return False #not a Hysitron file
       if self.verbose>1: print("Open Hysitron file: "+self.fileName)
       dataTest = np.loadtxt(inFile)
@@ -975,7 +1002,8 @@ class Indentation:
         if self.verbose>1: print("Open Micromaterials file: "+self.fileName)
         self.meta = {'measurementType': 'Micromaterials Indentation TXT'}
     except:
-      print("Is not a Micromaterials file")
+      if self.verbose>1: 
+        print("Is not a Micromaterials file")
       return False
 
     #store data
@@ -1018,6 +1046,100 @@ class Indentation:
     return success
 
 
+  def loadFischerScope(self,fileName):
+    """
+    Initialize txt-file from Fischer-Scope for processing 
+
+    Args:
+      fileName: file name
+    """
+    self.meta = {'date':[], 'shape correction':[], 'coordinate x':[], 'coordinate y':[],
+            'work elastic':[], 'work nonelastic':[], 'EIT/(1-vs^2) [GPa]':[], 'HIT [N/mm]':[],
+            'HUpl [N/mm]': [], 'hr [um]':[], 'hmax [um]':[], 'Compliance [um/N]':[],
+            'epsilon':[], 'fit range': []}
+    self.workbook = []
+    self.testList = []
+    self.fileName = fileName
+    block = None
+    with open(fileName,'r',encoding='iso-8859-1') as fIn:
+      # read initial lines and initialialize
+      line = fIn.readline()
+      if ".hap	Name of the application" not in line:
+        print("Not a Fischer Scope")
+        return False
+      identifier = line.split()[0]
+      _ = fIn.readline()
+      self.meta['Indent_Type'] = fIn.readline().split()[0]
+      self.meta['Indent_F'] = ' '.join( fIn.readline().split()[2:] )
+      self.meta['Indent_C'] = ' '.join( fIn.readline().split()[2:] )
+      self.meta['Indent_R'] = ' '.join( fIn.readline().split()[2:] )
+      #read all lines after initial lines
+      for line in fIn:
+        pattern = identifier+"   \d\d\.\d\d\.\d\d\d\d  \d\d:\d\d:\d\d"
+        if re.match(pattern, line) is not None:
+          ## finish old individual measurement
+          if block is not None:
+            df = pd.DataFrame(np.array(block), columns=['F','h','t'] )
+            self.workbook.append(df)
+          ## start new  individual measurement
+          block = []
+          self.meta['date'] += [' '.join(line.split()[-2:])]
+          self.testList.append('_'.join(line.split()[-2:]))
+        elif line.startswith('Indenter shape correction:'):
+          self.meta['shape correction'] += [line.split()[-1]]
+        elif 'x=  ' in line and 'y=  ' in line:
+          self.meta['coordinate x'] += [float(line.split()[1])]
+          self.meta['coordinate y'] += [float(line.split()[3])]
+        elif line.startswith('We	['):
+          self.meta['work elastic'] += [line.split()[-1]]
+        elif line.startswith('Wr	['):
+          self.meta['work nonelastic'] += [line.split()[-1]]
+        elif line.startswith('EIT/(1-vs^2)	[GPa]'):
+          self.meta['EIT/(1-vs^2) [GPa]'] += [float(line.split()[-1])]
+        elif line.startswith('HIT	[N/mm'):
+          self.meta['HIT [N/mm]'] += [float(line.split()[-1])]
+        elif line.startswith('HUpl	[N/mm'):
+          self.meta['HUpl [N/mm]'] += [float(line.split()[-1])]
+        elif line.startswith('hr	['):
+          self.meta['hr [um]'] += [float(line.split()[-1])]
+        elif line.startswith('hmax	['):
+          self.meta['hmax [um]'] += [float(line.split()[-1])]
+        elif line.startswith('Compliance	['):
+          self.meta['Compliance [um/N]'] += [float(line.split()[-1])]
+        elif 'Epsilon =' in line:
+          self.meta['epsilon'] += [float(line.split()[-1])]
+          self.meta['fit range'] += [' '.join(line.split()[:-3])]
+        elif re.match('^\d+,\d+\s\d+,\d+\s\d+,\d+$', line):
+          line = line.replace(',','.').strip()
+          block.append( [float(i) for i in line.split()] )
+      ## add last dataframe
+      df = pd.DataFrame(np.array(block), columns=['F','h','t'] )
+      self.workbook.append(df)
+    if self.verbose>1:
+      print("Meta information:",self.meta)
+      print("Number of measurements read:",len(self.workbook))
+    self.meta['measurementType'] = 'Fischer-Scope Indentation TXT'
+    if self.meta['Indent_F'].startswith('ESP'):
+      self.method = Method.MULTI
+    else:
+      self.method = Method.ISO
+    self.nextFischerScopeTest()
+    return True
+
+
+  def nextFischerScopeTest(self):
+    """
+    Go to next dataframe
+    """
+    df = self.workbook.pop(0)
+    self.testName = self.testList.pop(0)
+    self.t = np.array(df['t'])
+    self.h = np.array(df['h'])
+    self.p = np.array(df['F'])
+    self.valid = np.ones_like(self.t, dtype=np.bool)
+    self.identifyLoadHoldUnload()
+    return
+
 
   #@}
   ##
@@ -1040,7 +1162,6 @@ class Indentation:
         results = {"S_mN/um":self.slope[i], "hMax_um":self.h[self.valid][i], "pMax_mN":self.p[self.valid][i],\
                   "redE_GPa":self.modulusRed[i], "A_um2":self.A_c[i], "hc_um":self.h_c[i], "E_GPa":self.modulus[i],\
                   "H_GPa":self.hardness[i],"segment":str(i+1)}
-        results.update(self.meta)
         df = pd.DataFrame(results, index=[self.fileName+'-'+self.testName])
         dfAll = dfAll.append(df)
     dfAll['method'] = "Python"
@@ -1097,7 +1218,7 @@ class Indentation:
       saveFig: save plot to file [use known filename plus extension png]
       show: show figure, else do not show
     """
-    if len(self.slope)==1:
+    if len(self.slope)==1 and self.verbose>1:
       print("Stiffness:"+str(round(self.slope[0],1))     +"mN/um   hMax:"+str(round(self.h[self.valid][0],4))+"um    pMax:"+str(round(self.p[self.valid][0],2))+"mN")
       print("E*:       "+str(round(self.modulusRed[0],1))+"GPa     A:   "+str(round(self.A_c[0],4))+          "um2    hc: "+str(round(self.h_c[0],4))+"um")
       print("E:        "+str(round(self.modulus[0],1))   +"GPa     H:   "+str(round(self.hardness[0],1))+     "GPa")
@@ -1191,8 +1312,8 @@ class Indentation:
     while True:
       self.analyse()
       dfAll = dfAll.append(self.getDataframe())
-      if len(self.testList)==0: break
-      self.nextMicromaterialsTest()
+      if not self.testList: break
+      self.nextTest()
 
     ## determine compliance by intersection of 1/sqrt(p) -- compliance curve
     x = 1./np.sqrt(dfAll['pMax_mN'])
@@ -1228,11 +1349,7 @@ class Indentation:
       self.analyse()
       dfNew = dfNew.append(self.getDataframe())
       if len(self.testList)==0: break
-      if self.vendor == Vendor.Micromaterials:
-        self.nextMicromaterialsTest()
-      else:
-        print("NOT TESTED in calibration")
-        return
+      self.nextTest()
 
     ## verify
     totalCompliance = 1./np.array(dfAll['S_mN/um'])
@@ -1244,8 +1361,9 @@ class Indentation:
     ## fit shape function
     #reverse OliverPharrMethod to determine area function
     EredGoal = self.ReducedModulus(eTarget, self.nuMat)
-    A = np.array( np.power( dfNew['S_mN/um']  / (2.0*EredGoal/np.sqrt(np.pi))  ,2))
-    h_c = np.array( dfNew['hMax_um'] - self.beta*dfNew['pMax_mN']/dfNew['S_mN/um'])
+    mask = dfNew['hMax_um']>-1.0
+    A = np.array( np.power( dfNew['S_mN/um'][mask]  / (2.0*EredGoal/np.sqrt(np.pi))  ,2))
+    h_c = np.array( dfNew['hMax_um'][mask] - self.beta*dfNew['pMax_mN'][mask]/dfNew['S_mN/um'][mask])
     if plotTip:
       rNonPerfect = np.sqrt(A/np.pi)
     def fitFunct(params):     #error function

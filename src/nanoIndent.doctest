@@ -152,6 +152,20 @@ Typical values are:
 Use i.calibration(plotStiffness=True,plotTip=True) for plotting
 
 
+\subsection exampleFischer Example: Fischer-Scope
+\verbatim
+>>> from nanoIndent import Tip, Indentation
+>>> i = Indentation("../Examples/FischerScope/FS1.txt", nuMat=0.17,verbose=1)
+>>> i.analyse()
+>>> i.plot()                                    #doctest: +SKIP
+
+\endverbatim
+
+Issues:
+- unloading range: lower bound is 50% at 50% unloading amount; lower bound is 21% at 90% unloading amount
+- unloading range: upper bound is very chaotic changing for different materials even for the same unloading amounts
+
+
 \subsection exampleBasicPopin Example: Read G200 data and determine pop-in for all tests in file
 \verbatim
 >>> from nanoIndent import Indentation
