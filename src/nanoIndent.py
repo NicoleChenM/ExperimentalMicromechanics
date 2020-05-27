@@ -578,20 +578,39 @@ class Indentation:
       return
     rate = self.p[1:]-self.p[:-1]
     #using histogram, define masks for loading and unloading
-    hist,bins= np.histogram(rate , bins=100) #TODO Better algorithm: 1000 is good for FischerScope, but leads to other failures
+    hist,bins= np.histogram(rate , bins=1000) #TODO Better algorithm: 1000 is good for FischerScope, but leads to other failures
+    if self.vendor==Vendor.HysiTXT:
+      hist = ndimage.filters.gaussian_filter1d(hist,2)
     binCenter = (bins[1:]+bins[:-1])/2
     peaks = np.where(hist>10)[0]                  #peaks with more than 10 items
     zeroID = np.argmin(np.abs(binCenter[peaks]))  #id which is closest to zero
     zeroValue = binCenter[peaks][zeroID]
-    zeroDelta = max( binCenter[zeroID+1]-binCenter[zeroID],\
-                     binCenter[zeroID]-binCenter[zeroID-1])/2
+    ## Better algorithm: look for closest zero historgram-peak to zeroValue; take that to calculate delta
+    zeroPeaks = np.logical_and(hist<0.3, binCenter<zeroValue)
+    zeroPeaks = np.where(zeroPeaks)[0]
+    firstZero = np.argmin(np.abs(zeroValue-binCenter[zeroPeaks]))
+    zeroDelta = abs(binCenter[zeroPeaks][firstZero]-zeroValue)
+    ## Old algorithm: find next binCenter and calculate its distance; depends on histogram step size; not good
+    # zeroDelta = max( binCenter[zeroID+1]-binCenter[zeroID],\
+    #                  binCenter[zeroID]-binCenter[zeroID-1])/2
+    # zeroDelta = max( zeroDelta, 0.002)    #0.002mN/s seems to be accuracy limit
     loadMask  = rate>(zeroValue+zeroDelta)
     unloadMask= rate<(zeroValue-zeroDelta)
     if plot:     # verify visually
-      plt.bar(binCenter,hist)
-      plt.axvline(zeroValue)
-      plt.axvline(zeroValue+zeroDelta, linestyle='dashed')
-      plt.axvline(zeroValue-zeroDelta, linestyle='dashed')
+      plt.plot(binCenter,hist,'o')#, width=0.001)
+      plt.axvline(zeroValue, c='k')
+      plt.axvline(binCenter[zeroPeaks][firstZero], c='r')
+      plt.axvline(zeroValue+zeroDelta, c='k', linestyle='dashed')
+      plt.axvline(zeroValue-zeroDelta, c='k', linestyle='dashed')
+      plt.ylabel('count []')
+      plt.xlabel('rate [$mN/sec$]')
+      plt.show()
+      plt.plot(self.t[1:],rate)
+      plt.axhline(zeroValue, c='k')
+      plt.axhline(zeroValue+zeroDelta, c='k', linestyle='dashed')
+      plt.axhline(zeroValue-zeroDelta, c='k', linestyle='dashed')
+      plt.xlabel('time incr. []')
+      plt.ylabel('rate [$mN/sec$]')
       plt.show()
     #clean small fluctuations
     size = 7
@@ -614,7 +633,14 @@ class Indentation:
       plt.xlabel('time incr. []')
       plt.ylabel('force [$mN$]')
       plt.show()
+    while len(loadIdx)<len(unloadIdx) and unloadIdx[0]<loadIdx[0]:
+      print("**WARNING identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED")
+      unloadIdx = unloadIdx[2:]
+    while len(loadIdx)<len(unloadIdx) and unloadIdx[-3]>loadIdx[-1]:
+      print("**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED")
+      unloadIdx = unloadIdx[:-2]
     if len(loadIdx)!=len(unloadIdx):
+      print("**WARNING identifyLoadHoldUnload: Repair required")
       #TODO Repair possibly that this is not required
       self.identifyLoadHoldUnloadCSM()
       return
@@ -623,6 +649,8 @@ class Indentation:
       self.iLHU.append([loadIdx[::2][i],loadIdx[1::2][i],unloadIdx[::2][i],unloadIdx[1::2][i]])
     if len(self.iLHU)>1:
       self.method=Method.MULTI
+    if self.verbose>1:
+      print("Number Unloading segments",len(self.iLHU))
     #drift segments
     iDriftS = unloadIdx[1::2][i]+1
     iDriftE = len(self.p)-1
