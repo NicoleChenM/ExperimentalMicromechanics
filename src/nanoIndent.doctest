@@ -131,10 +131,11 @@ Tagged  ['Test 025 Tagged']
 >>> i.nuMat = 0.3
 >>> i.plotTestingMethod()               #can be used for all        #doctest: +SKIP
 >>> i.plot()                            #CSM: no unloading is plotted    #doctest: +SKIP
-
+>>> i.calibrateStiffness(0.5,plot=False)
 \endverbatim
 - and repeat this for all sheets in the excel file, by executing i.nextTest and i.compareReadCalc again
 - Allow plotting in verifyReadCalc by omiting plot=False
+- the calibrateStiffness allows to adjust the stiffness such that K2P is horizontal
 
 
 \subsection exampleCalibration Example: Calibration using MicroMaterials indentations

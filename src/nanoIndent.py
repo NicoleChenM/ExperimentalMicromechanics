@@ -522,9 +522,13 @@ class Indentation:
     update slopes/stiffness, Young's modulus and hardness after displacement correction by:
     - drift change
     - compliance change
+
+    ONLY DO ONCE AFTER LOADING FILE: if this causes issues introduce flag analysed which is toggled during loading and analysing
     """
     self.h -= self.tip.compliance*self.p
-    if self.method != Method.CSM:
+    if self.method == Method.CSM:
+      self.slope = 1./(1./self.slope-self.tip.compliance)
+    else:
       self.slope, self.valid, _, _ = self.stiffnessFromUnloading(self.p, self.h)
       self.slope = np.array(self.slope)
     self.calcYoungsModulus()
@@ -1344,28 +1348,46 @@ class Indentation:
   ##
   # @name CALIBRATION METHOD
   #@{
-  def calibration(self,eTarget=72.0,minDepth=1.0,plotStiffness=False,plotTip=False):
+  def calibration(self,eTarget=72.0,numPolynomial=3,critDepth=1.0,plotStiffness=False,plotTip=False):
     """
     Calibrate by first frame-stiffness and then area-function calibration
 
     Args:
        eTarget: target Young's modulus (not reduced), nu is known
-       minDepth: for frame stiffness calibration: what is the minimum depth
+       numPolynomial: number of area function polynomial
+       critDepth: frame stiffness: what is the minimum depth of data used; area function: what is the maximum depth of data used
+                  (if deep data is used for area function, this data can scew the area function)
        plotStiffness: plot stiffness graph with compliance
        pltTip: plot tip shape after fitting
     """
-    ## create data-frame of all files
-    dfAll = pd.DataFrame()
-    while True:
-      self.analyse()
-      dfAll = dfAll.append(self.getDataframe())
-      if not self.testList: break
-      self.nextTest()
+    if self.method==Method.CSM:
+      x, y, mask = None, None, None
+      while True:
+        self.analyse()
+        if x is None:
+          x    = 1./np.sqrt(self.p[self.valid])
+          y    = 1./self.slope
+          mask = self.h[self.valid]
+        else:
+          x =    np.hstack((x,    1./np.sqrt(self.p[self.valid]) ))
+          y =    np.hstack((y,    1./self.slope))
+          mask = np.hstack((mask, self.h[self.valid]))
+        if not self.testList: break
+        self.nextTest()
+      mask = mask > critDepth
+    else:
+      ## create data-frame of all files
+      dfAll = pd.DataFrame()
+      while True:
+        self.analyse()
+        dfAll = dfAll.append(self.getDataframe())
+        if not self.testList: break
+        self.nextTest()
+      ## determine compliance by intersection of 1/sqrt(p) -- compliance curve
+      x = 1./np.sqrt(dfAll['pMax_mN'])
+      y = 1./dfAll['S_mN/um']
+      mask = dfAll['hMax_um'] > critDepth
 
-    ## determine compliance by intersection of 1/sqrt(p) -- compliance curve
-    x = 1./np.sqrt(dfAll['pMax_mN'])
-    y = 1./dfAll['S_mN/um']
-    mask = dfAll['hMax_um'] > minDepth
     param, covM = np.polyfit(x[mask],y[mask],1, cov=True)
     print("fit f(x)=",round(param[0],5),"*x+",round(param[1],5))
     frameStiff = 1./param[1]
@@ -1384,46 +1406,62 @@ class Indentation:
       plt.xlabel("1/sqrt(p) [$mN^{-1/2}$]")
       plt.ylabel("meas. compliance [$\mu m/mN$]")
       plt.legend(loc=0)
-      plt.ylim(bottom=0)
-      plt.xlim(left=0)
+      plt.ylim([0,np.max(y[mask])*3])
+      plt.xlim([0,np.max(x[mask])*3])
       plt.show()
 
     ## re-create data-frame of all files
     self.__init__(self.fileName, nuMat=self.nuMat, verbose=self.verbose)
     self.tip.compliance = frameCompliance
-    dfNew = pd.DataFrame()
-    while True:
-      self.analyse()
-      dfNew = dfNew.append(self.getDataframe())
-      if len(self.testList)==0: break
-      self.nextTest()
-
-    ## verify
-    totalCompliance = 1./np.array(dfAll['S_mN/um'])
-    contactStiffness = 1./(totalCompliance-frameCompliance) #mN/um
-    slope = np.array(dfNew['S_mN/um'])
-    print("Info: difference direct-indirect stiffness in %",round(np.linalg.norm((slope-contactStiffness)/slope)*100,2))
-    print("Should be small")
+    if self.method==Method.CSM:
+      del x; del y; del mask
+      slope = None
+      while True:
+        self.analyse()
+        if slope is None:
+          slope = self.slope
+          h     = self.h[self.valid]
+          p     = self.p[self.valid]
+        else:
+          slope = np.hstack((slope, self.slope))
+          h     = np.hstack((h,     self.h[self.valid]))
+          p     = np.hstack((p,     self.p[self.valid]))
+        if not self.testList: break
+        self.nextTest()
+    else:
+      dfNew = pd.DataFrame()
+      while True:
+        self.analyse()
+        dfNew = dfNew.append(self.getDataframe())
+        if len(self.testList)==0: break
+        self.nextTest()
+      slope = np.array(dfNew['S_mN/um'])
+      ## verify (only makes sense for non-CSM because CSM calculates stiffness like this)
+      totalCompliance = 1./dfAll['S_mN/um']
+      contactStiffness = 1./(totalCompliance-frameCompliance) #mN/um
+      print("Info: difference direct-indirect stiffness %",round(np.linalg.norm((slope-contactStiffness)/slope)*100,2),"%. Should be small")
+      slope = np.array(dfNew['S_mN/um'])
+      h     = dfNew['hMax_um']
+      p     = dfNew['pMax_mN']
 
     ## fit shape function
     #reverse OliverPharrMethod to determine area function
     EredGoal = self.ReducedModulus(eTarget, self.nuMat)
-    mask = dfNew['hMax_um']>-1.0
-    A = np.array( np.power( dfNew['S_mN/um'][mask]  / (2.0*EredGoal/np.sqrt(np.pi))  ,2))
-    h_c = np.array( dfNew['hMax_um'][mask] - self.beta*dfNew['pMax_mN'][mask]/dfNew['S_mN/um'][mask])
+    A = np.array( np.power( slope  / (2.0*EredGoal/np.sqrt(np.pi))  ,2))
+    h_c = np.array( h - self.beta*p/slope )
     if plotTip:
       rNonPerfect = np.sqrt(A/np.pi)
     def fitFunct(params):     #error function
       self.tip.prefactors = [params[x].value for x in params]+['iso']
-      A_temp = self.tip.areaFunction(h_c)
-      residual     = np.abs(A-A_temp)/len(A) #normalize by number of points
+      A_temp = self.tip.areaFunction(h_c[h<critDepth])                #only use depth shallower than critDepth
+      residual     = np.abs(A[h<critDepth]-A_temp)/len(A[h<critDepth]) #normalize by number of points
       return residual
     # Parameters, 'value' = initial condition, 'min' and 'max' = boundaries
     params = lmfit.Parameters()
-    params.add('m0', value= 24.3, min=20.0, max=30.0)
-    for idx in range(1,3):
+    params.add('m0', value= 24.3, min=20.0, max=60.0)
+    for idx in range(1,numPolynomial):
       startVal = np.power(100,idx)
-      params.add('m'+str(idx), value= startVal, min=-startVal*100, max=startVal*100)
+      params.add('m'+str(idx), value= startVal/1000, min=-startVal*100, max=startVal*100)
     # do fit, here with leastsq model; args=(h_c, A)
     result = lmfit.minimize(fitFunct, params, maxfev=10000)
     self.tip.prefactors = [result.params[x].value for x in result.params]+['iso']
@@ -1434,6 +1472,66 @@ class Indentation:
     if plotTip:
       plt.plot(rNonPerfect, h_c,'.')
       self.tip.plotIndenterShape(maxDepth=1.5)
+    return
+
+
+  def calibrateStiffness(self,fraction=0.5, initCompliance=0.0000001, plot=True):
+    """
+    Calculate and calibrate stiffness from K^2/P of individual measurement.
+    Makes only sense if multiple unloadings exist in data
+
+    Args:
+      fraction: fraction to use for analysis (fraction=0.2 implies that from 20% of the max. depth to max. depth is used)
+    """
+    hMax, hMin = np.max(self.h[self.valid]), np.min(self.h[self.valid])
+    hThreshold = fraction*hMax + (1-fraction)*hMin
+    h          = self.h[self.valid][ self.h[self.valid]>hThreshold ]
+    k2p        = self.k2p[ self.h[self.valid]>hThreshold ]
+    k          = self.slope[ self.h[self.valid]>hThreshold ]
+    p          = self.p[self.valid][ self.h[self.valid]>hThreshold ]
+    fit        = np.polyfit(h,k2p,1)
+    if self.verbose>1:
+      print("The normalized slope of K^2/P is:",round(fit[0]/fit[1]*100,2), "(Absolute value <1: ok)" )
+    if plot:
+      x_ = np.linspace(hMin,hMax)
+      plt.plot(self.h[self.valid],self.k2p,c='C0',label='original')
+      plt.plot(h,k2p,'.',c='C1',label='fraction used')
+      plt.plot(x_, np.polyval(fit,x_),'--',c='C0')
+
+    # do fit, here with leastsq model
+    def fitFunct(params):     #error function
+      compliance = params['compliance'].value
+      if self.method == Method.CSM:
+        kContact = 1./(1./k-compliance) #mN/um
+        x = h - p*compliance
+        y = kContact**2/p
+      else:
+        self.tip.compliance = compliance
+        print("TODO code is missing")
+        aa=4/0
+      error = np.polyfit(x,y,1)[0]
+      # print("Used compliance, error",compliance,error)
+      if abs(error)<1e-6: error=0
+      return error
+    params = lmfit.Parameters()
+    params.add('compliance', value=initCompliance)
+    result = lmfit.minimize(fitFunct, params, maxfev=1000)
+    self.tip.compliance = result.params['compliance'].value
+    if self.verbose>1:
+      print("Optimal compliance",self.tip.compliance,'um/mN')
+    self.slope = 1./(1./self.slope-self.tip.compliance)
+    self.h     = self.h - self.p*self.tip.compliance
+    self.k2p   = self.slope**2 / self.p[self.valid]
+    if plot:
+      plt.plot(self.h[self.valid],self.k2p,c='C3',label='corrected')
+      h          = self.h[self.valid][ self.h[self.valid]>hThreshold ]
+      k2p        = self.k2p[ self.h[self.valid]>hThreshold ]
+      fit        = np.polyfit(h,k2p,1)
+      plt.plot(x_, np.polyval(fit,x_),'--',c='C3')
+      plt.xlabel('depth [$\mu m$]')
+      plt.ylabel('K2P [$GPa$]')
+      plt.legend(loc=0)
+      plt.show()
     return
 
 
@@ -1716,7 +1814,7 @@ class Tip:
     plt.plot(rNonPerfect, h_c, '-', label=tipLabel)
     plt.plot(rPerfect,h_c, '-k', label='Berkovich')
     plt.legend(loc="best")
-    plt.ylabel('depth [$\mu m$]')
+    plt.ylabel('contact depth [$\mu m$]')
     plt.xlabel('contact radius [$\mu m$]')
     plt.xlim([0,maxDepth*4./3./zoom])
     plt.ylim([0,maxDepth/zoom])
