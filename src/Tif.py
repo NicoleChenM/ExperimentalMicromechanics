@@ -392,21 +392,22 @@ class Tif:
 
     Args:
        method: 'r', 'a', 'e' <br>
-	      'rescale' or 'r': Automatic gray-value rescaling, default, <strong>smallest change</strong><br>
-	      'adaptive' or 'a': Gray equalization, leads to centered Gaussian curve, <strong>medium change</strong>, favorite<br>
-	      'equalization' or 'e': Gray equalization, leads to cumulative histogram that is a line <strong>largest change</strong>
+	      'rescale' or 'r': Automatic gray-value rescaling, default, smallest change<br>
+	      'adaptive' or 'a': Gray equalization, leads to centered Gaussian curve, medium change, favorite<br>
+	      'equalization' or 'e': Gray equalization, leads to cumulative histogram that is a line largest change
 
        percent: percent (default: 0) to allow for clipping at the top and at the bottom<br>
 	      (e.g. top 1% of values become white and bottom 1% of values become black
     """
     if self.image.mode == 'P':
       if method=='equalization' or method=='e':
-        self.image = Image.fromarray(exposure.equalize_hist(self.image)*255).convert('P')
+        self.image = Image.fromarray(exposure.equalize_hist(np.array(self.image))*255).convert('P')
+        print('something not correct here')
       if method=='rescale' or method=='r':
         pMin, pMax = np.percentile(self.image, (percent, 100-percent))
         self.image = Image.fromarray(exposure.rescale_intensity(np.array(self.image), in_range=(pMin, pMax))).convert('P')
       if method=='adaptive' or method=='a':
-        self.image = Image.fromarray( exposure.equalize_adapthist(np.array(self.image), clip_limit=percent/100.) /255.0 ).convert('P')
+        self.image = Image.fromarray(exposure.equalize_adapthist(np.array(self.image), clip_limit=percent/100.)*255).convert('P')
     elif self.image.mode == "RGB":
       print('enhancement does not work work for color images')
       print('Do first: i.image = i.image.convert(mode="L")')

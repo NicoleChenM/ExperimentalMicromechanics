@@ -80,7 +80,7 @@ class Indentation:
     #set default parameters
     success = False
     if not os.path.exists(fileName) and fileName!='':
-      print("**ERROR __init__: file does not exist",fileName)
+      print("*ERROR* __init__: file does not exist",fileName)
       return None
     if fileName.endswith(".xls"):
       # KLA, Agilent, Keysight, MTS
@@ -224,7 +224,7 @@ class Indentation:
     """
     debug = False
     if self.method== Method.CSM:
-      print("***WARNING Cannot calculate unloading data from CSM method")
+      print("*ERROR* Should not land here: CSM method")
       return None,None,None,None
     if self.verbose>1: print("Number of unloading segments:"+str(len(self.iLHU))+"  Method:"+str(self.method))
     S         = []
@@ -236,7 +236,7 @@ class Indentation:
     for cycle in self.iLHU:
       loadStart, loadEnd, unloadStart, unloadEnd = cycle
       if loadStart>loadEnd or loadEnd>unloadStart or unloadStart>unloadEnd:
-        print('**ERROR stiffnessFromUnloading: indicies not in order:',cycle)
+        print('*ERROR* stiffnessFromUnloading: indicies not in order:',cycle)
       maskSegment = np.zeros_like(h, dtype=np.bool)
       maskSegment[unloadStart:unloadEnd+1] = True
       maskForce   = np.logical_and(P<P[loadEnd]*self.unloadPMax, P>P[loadEnd]*self.unloadPMin)
@@ -434,7 +434,7 @@ class Indentation:
         print(compliance,"Fit f(x)=",prefactors[0],"*x+",prefactors[1])
         return np.abs(prefactors[0])
       else:
-        print("*** WARNING: too short vector",len(h_))
+        print("*WARNING*: too short vector",len(h_))
         return 9999999.
     if calibrate:
       result = fmin_l_bfgs_b(errorFunction, compliance0, bounds=[(-0.1,0.1)], approx_grad=True, epsilon=0.000001, factr=1e11)
@@ -524,8 +524,9 @@ class Indentation:
     - compliance change
     """
     self.h -= self.tip.compliance*self.p
-    self.slope, self.valid, _, _ = self.stiffnessFromUnloading(self.p, self.h)
-    self.slope = np.array(self.slope)
+    if self.method != Method.CSM:
+      self.slope, self.valid, _, _ = self.stiffnessFromUnloading(self.p, self.h)
+      self.slope = np.array(self.slope)
     self.calcYoungsModulus()
     self.calcHardness()
     return
@@ -635,13 +636,13 @@ class Indentation:
       plt.ylabel('force [$mN$]')
       plt.show()
     while len(loadIdx)<len(unloadIdx) and unloadIdx[0]<loadIdx[0]:
-      print("**WARNING identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED")
+      print("*WARNING* identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED")
       unloadIdx = unloadIdx[2:]
     while len(loadIdx)<len(unloadIdx) and unloadIdx[-3]>loadIdx[-1]:
-      print("**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED")
+      print("*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED")
       unloadIdx = unloadIdx[:-2]
     while len(loadIdx)>len(unloadIdx) and loadIdx[3]<unloadIdx[1]:
-      print("**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED")
+      print("*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED")
       loadIdx = loadIdx[2:]
     if plot:     # verify visually
       plt.plot(self.p)
@@ -655,7 +656,7 @@ class Indentation:
       plt.ylabel('force [$mN$]')
       plt.show()
     if len(loadIdx)!=len(unloadIdx):
-      print("**WARNING identifyLoadHoldUnload: Repair required")
+      print("*WARNING* identifyLoadHoldUnload: Repair required")
       #TODO Repair possibly that this is not required
       self.identifyLoadHoldUnloadCSM()
       return
@@ -696,11 +697,11 @@ class Indentation:
         iDriftS   = len(self.p)-2
         iDriftE   = len(self.p)-1
       if not (iSurface<iLoad and iLoad<iHold and iHold<iDriftS and iDriftS<iDriftE and iDriftE<len(self.h)):
-        print("**ERROR identifyLoadHoldUnloadCSM in identify load-hold-unloading cycles")
+        print("*ERROR* identifyLoadHoldUnloadCSM in identify load-hold-unloading cycles")
         print(iSurface,iLoad,iHold,iDriftS,iDriftE, len(self.h))
     else:  #This part is required
       if self.method != Method.CSM:
-        print("Warning: no hold or unloading segments in data")
+        print("*WARNING*: no hold or unloading segments in data")
       iHold     = len(self.p)-3
       iDriftS   = len(self.p)-2
       iDriftE   = len(self.p)-1
@@ -743,7 +744,7 @@ class Indentation:
     wb = pd.read_excel(fileName,sheet_name='Required Inputs')
     self.meta.update( dict(wb.iloc[-1]) )
     if self.meta['Poissons Ratio']!=self.nuMat:
-      print("WARNING: your Poissions Ratio is different than in file.",self.nuMat,self.meta['Poissons Ratio'])
+      print("*WARNING*: your Poissions Ratio is different than in file.",self.nuMat,self.meta['Poissons Ratio'])
     self.datafile = pd.read_excel(fileName, sheet_name=None)
     tagged = []
     code = {"Load On Sample":"p", "Force On Surface":"p", "_Load":"pRaw", "Raw Load":"pRaw"\
@@ -783,7 +784,7 @@ class Indentation:
     if len(tagged)>0 and self.verbose>1: print("Tagged ",tagged)
     if not ("t" in self.indicies) or not ("p" in self.indicies) or \
        not ("h" in self.indicies) or not ("slope" in self.indicies)  :
-          print("WARNING: INDENTATION: Some index is missing (t,p,h,slope) should be there")
+          print("*WARNING*: INDENTATION: Some index is missing (t,p,h,slope) should be there")
     self.nextAgilentTest()
     return True
 
@@ -895,7 +896,7 @@ class Indentation:
       self.tip.prefactors = prefact
       self.tip.prefactors.append("iso")
       if (numSegments!=len(segmentTime)) or (numSegments!=len(segmentDeltaP)):
-        print("ERROR", numSegments,len(segmentTime),len(segmentDeltaP ) )
+        print("*ERROR*", numSegments,len(segmentTime),len(segmentDeltaP ) )
       segmentDeltaP = np.array(segmentDeltaP)
       segmentPoints = np.array(segmentPoints)
       segmentTime   = np.array(segmentTime)
@@ -1600,10 +1601,10 @@ class Tip:
     if self.compliance > 0.01 or self.compliance < 0.0000001:
       if compliance == 0:
         if verbose>1:
-          print("***Warning: stiffness outside domain 1e5...1e10 N/m: infinite")
+          print("*WARNING*: stiffness outside domain 1e5...1e10 N/m: infinite")
       else:
         if verbose>1:
-          print("***Warning: stiffness outside domain 1e5...1e10 N/m:",round(1000./self.compliance) )
+          print("*WARNING*: stiffness outside domain 1e5...1e10 N/m:",round(1000./self.compliance) )
     if plot:
       self.plotIndenterShape()
     return
@@ -1658,7 +1659,7 @@ class Tip:
       rA[~mask] = deltaY - tan*deltaX
       area = math.pi * rA * rA
     else:
-      print("*** ERROR: prefactors last value does not contain type")
+      print("*ERROR*: prefactors last value does not contain type")
     if type(h)==np.ndarray:  area[area<0] = 0.0
     else:                    area = max(area,0.0)
     return area/1.e6
@@ -1690,7 +1691,7 @@ class Tip:
     elif self.prefactors[-1]=="perfect":
       h = math.sqrt(area / 24.494)
     else:
-      print("*** ERROR: prefactors last value does not contain type")
+      print("*ERROR*: prefactors last value does not contain type")
     return h
 
 
