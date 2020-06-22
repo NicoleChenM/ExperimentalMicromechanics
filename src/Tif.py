@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from skimage import img_as_float, exposure
 from xml.dom import minidom
 import cv2
+import codecs
 
 class Tif:
   ##
@@ -93,7 +94,7 @@ class Tif:
     valueArray = self.meta['Image_Pixel_Size'].split()
     self.pixelSize = float(valueArray[0])/1000  #guess it is nm
     if valueArray[1]=='nm': self.pixelSize = self.pixelSize
-    elif  [i.encode("hex") for i in valueArray[1]] == ['b5', '6d']:  #um
+    elif valueArray[1].encode('utf-8')==b'\xc2\xb5m':  #um
       self.pixelSize *= 1000
     else:
       logging.error("  Pixel size not nm")
@@ -381,6 +382,15 @@ class Tif:
     self.width = self.widthPixel*self.pixelSize
     return
 
+
+  def autoCrop(self):
+    """
+    Automatically crop the bottom bar from the image. The top line croped is the line that only contains white pixel
+    """
+    lineAvg = np.sum(self.image, axis=1) /self.image.size[0]
+    firstWhite = np.where(lineAvg>254)[0][0]
+    self.crop(yMax=firstWhite)
+    return
 
 
   def enhance(self, method='rescale', percent=1):

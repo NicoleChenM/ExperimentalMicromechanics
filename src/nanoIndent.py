@@ -206,7 +206,10 @@ class Indentation:
     """
     internal function describing the unloading regime
     """
-    return B*np.power( (h_-hf),m)
+    import warnings
+    warnings.filterwarnings('error') #catch runtime warning and raise exception which is catched in the caller-function
+    value = B*np.power(h_-hf,m)
+    return value
 
 
   def stiffnessFromUnloading(self, P, h, plot=False):
@@ -248,6 +251,8 @@ class Indentation:
       try:
         opt, _ = curve_fit(self.UnloadingPowerFunc, h[mask],P[mask], p0=[B0,hf0,1.] )
         B,hf,m = opt
+        if np.isnan(B):
+          raise ValueError("NAN after fitting")
       except:
         print("stiffnessFrommasking - Multi Unload - Fitting failed. use linear")
         B  = (P[mask][-1]-P[mask][0])/(h[mask][-1]-h[mask][0])
@@ -1047,7 +1052,7 @@ class Indentation:
        plotContact: plot intial contact identification (use this method for access)
     """
     try:            #file-content given
-      dataTest = np.loadtxt(fileName)
+      dataTest = np.loadtxt(fileName)  #exception caught
       if not isinstance(fileName, io.TextIOWrapper):
         self.fileName = fileName
         if self.verbose>1: print("Open Micromaterials file: "+self.fileName)
