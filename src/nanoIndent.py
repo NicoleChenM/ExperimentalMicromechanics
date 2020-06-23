@@ -1124,7 +1124,7 @@ class Indentation:
         print("Not a Fischer Scope")
         return False
       identifier = line.split()[0]
-      _ = fIn.readline()
+      temp = fIn.readline()
       self.meta['Indent_Type'] = fIn.readline().split()[0]
       self.meta['Indent_F'] = ' '.join( fIn.readline().split()[2:] )
       self.meta['Indent_C'] = ' '.join( fIn.readline().split()[2:] )
