@@ -77,7 +77,7 @@ Basic tutorials for G200 and Hysitron</h1>
      Time                           : tTotal
      X Position                     : xCoarse
      Y Position                     : yCoarse
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 Number Unloading segments 1
 &gt;&gt;&gt; i.nuMat = 0.2
 &gt;&gt;&gt; i.plot()                                        
@@ -121,7 +121,7 @@ Error in H:  0.000e+00 % between 3.068e+01 and 3.068e+01</pre><h2><a class="anch
 <p>area function = 24.5, -3.7003e1, 5.2827e4, -2.8535e5, 4.8121e5, -2.4060e5 compliance = 3,42 nm/mN.....t = Tip(compliance=3.42/1e3) </p><pre class="fragment">&gt;&gt;&gt; from nanoIndent import Tip, Indentation
 &gt;&gt;&gt; i = Indentation("../Examples/Hysitron/RobinSteel0000LC.txt")      #tip data NOT stored in file
 Open Hysitron file: ../Examples/Hysitron/RobinSteel0000LC.txt
-**WARNING identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED
 Number Unloading segments 1
 &gt;&gt;&gt; i.analyse()
 Number of unloading segments:1  Method:Method.ISO
@@ -157,9 +157,13 @@ Number of unloading segments:1  Method:Method.ISO
 Tagged  ['Test 025 Tagged']
 &gt;&gt;&gt; i.nuMat = 0.3
 &gt;&gt;&gt; i.plotTestingMethod()               #can be used for all        
-&gt;&gt;&gt; i.plot()                            #CSM: no unloading is plotted    </pre><ul>
+&gt;&gt;&gt; i.plot()                            #CSM: no unloading is plotted    
+&gt;&gt;&gt; i.calibrateStiffness(0.5,plot=False)
+The normalized slope of K^2/P is: -0.93 (Absolute value &lt;1: ok)
+Optimal compliance 8.66e-06 um/mN</pre><ul>
 <li>and repeat this for all sheets in the excel file, by executing i.nextTest and i.compareReadCalc again</li>
 <li>Allow plotting in verifyReadCalc by omiting plot=False</li>
+<li>the calibrateStiffness allows to adjust the stiffness such that K2P is horizontal</li>
 </ul>
 <h2><a class="anchor" id="exampleCalibration"></a>
 Example: Calibration using MicroMaterials indentations</h2>
@@ -218,7 +222,7 @@ looping through all tests and using dataframes</h1>
 &gt;&gt;&gt; from nanoIndent import Tip, Indentation
 &gt;&gt;&gt; tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
 &gt;&gt;&gt; i = Indentation("../Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip, verbose=1)
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 &gt;&gt;&gt; i.plot()                                    
 &gt;&gt;&gt; print("All tests remaining in file: ",i.testList)
 All tests remaining in file:  ['Test 024', 'Test 023', 'Test 022', 'Test 021', 'Test 020', 'Test 019', 'Test 018', 'Test 017', 'Test 016', 'Test 015', 'Test 014', 'Test 013', 'Test 012', 'Test 011', 'Test 010', 'Test 009', 'Test 008', 'Test 007', 'Test 006', 'Test 005', 'Test 004', 'Test 003', 'Test 002', 'Test 001']
@@ -230,23 +234,23 @@ Meta information {'Test': 25.0, 'Percent To Unload': 90, 'Surface Approach Veloc
 ...   if len(i.testList)==0:
 ...     break
 ...   success = i.nextAgilentTest()
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 &gt;&gt;&gt; k2p = df['S_mN/um']**2/df['pMax_mN']
-&gt;&gt;&gt; print('Mean and standard deviation:',round(np.mean(k2p)),round(np.std(k2p)))
-Mean and standard deviation: 2575.0 77.0</pre><p> For Copper the K2P value is ~2500GPa while for Fused silica it is ~660GPa.</p>
+&gt;&gt;&gt; print('Mean and standard deviation:',int(round(np.mean(k2p))),int(round(np.std(k2p))))
+Mean and standard deviation: 2575 77</pre><p> For Copper the K2P value is ~2500GPa while for Fused silica it is ~660GPa.</p>
 <h1><a class="anchor" id="Verification"></a>
 Short verification methods of Oliver-Pharr Method</h1>
 <p>in addition to the ones mentioned before </p>
@@ -342,7 +346,7 @@ Example: Tare time, depth, force</h2>
      Time                           : tTotal
      X Position                     : xCoarse
      Y Position                     : yCoarse
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 Number Unloading segments 1
 &gt;&gt;&gt; i.tareDepthForce(compareRead=True)
 Drift rate: -0.396 nm/s
@@ -432,7 +436,7 @@ Compare indenter shapes</h2>
 
 <hr class="footer"/><address class="footer"><small>
 Copyright by Steffen Brinckmann
-<!--Generated on Wed May 27 2020 15:52:01 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
+<!--Generated on Tue Jun 23 2020 14:13:17 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13 -->
 </small></address>

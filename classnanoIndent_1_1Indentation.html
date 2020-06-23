@@ -166,15 +166,18 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">eTarget</td><td>target Young's modulus (not reduced), nu is known </td></tr>
-    <tr><td class="paramname">minDepth</td><td>for frame stiffness calibration: what is the minimum depth </td></tr>
+    <tr><td class="paramname">numPolynomial</td><td>number of area function polynomial </td></tr>
+    <tr><td class="paramname">critDepth</td><td>frame stiffness: what is the minimum depth of data used; area function: what is the maximum depth of data used (if deep data is used for area function, this data can scew the area function) </td></tr>
     <tr><td class="paramname">plotStiffness</td><td>plot stiffness graph with compliance </td></tr>
     <tr><td class="paramname">pltTip</td><td>plot tip shape after fitting </td></tr>
   </table>
   </dd>
 </dl>
 </div></td></tr>
-<tr class="memitem:acebd8b587815cca59f48f96d52d227ff"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#acebd8b587815cca59f48f96d52d227ff">calibration</a> (self, eTarget=72.0, minDepth=1.0, plotStiffness=False, plotTip=False)</td></tr>
-<tr class="separator:acebd8b587815cca59f48f96d52d227ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba1abda774437ac66449a98572e0a1b7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#aba1abda774437ac66449a98572e0a1b7">calibration</a> (self, eTarget=72.0, numPolynomial=3, critDepth=1.0, plotStiffness=False, plotTip=False)</td></tr>
+<tr class="separator:aba1abda774437ac66449a98572e0a1b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c20d11bb582933e7ec4724ef24f6aeb"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classnanoIndent_1_1Indentation.html#a3c20d11bb582933e7ec4724ef24f6aeb">calibrateStiffness</a> (self, fraction=0.5, initCompliance=0.0000001, <a class="el" href="classnanoIndent_1_1Indentation.html#a3fce925d7361bc97577972c31e213fce">plot</a>=True)</td></tr>
+<tr class="separator:a3c20d11bb582933e7ec4724ef24f6aeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">VERIFY METHODS</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>Test one data set to ensure everything still working: OliverPharrMethod and area functions (normal and inverse) </p>
 </div></td></tr>
@@ -427,8 +430,48 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="acebd8b587815cca59f48f96d52d227ff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acebd8b587815cca59f48f96d52d227ff">&#9670;&nbsp;</a></span>calibration()</h2>
+<a id="a3c20d11bb582933e7ec4724ef24f6aeb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c20d11bb582933e7ec4724ef24f6aeb">&#9670;&nbsp;</a></span>calibrateStiffness()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def nanoIndent.Indentation.calibrateStiffness </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>fraction</em> = <code>0.5</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>initCompliance</em> = <code>0.0000001</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>plot</em> = <code>True</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aba1abda774437ac66449a98572e0a1b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba1abda774437ac66449a98572e0a1b7">&#9670;&nbsp;</a></span>calibration()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -449,7 +492,13 @@ Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>minDepth</em> = <code>1.0</code>, </td>
+          <td class="paramname"><em>numPolynomial</em> = <code>3</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>critDepth</em> = <code>1.0</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1398,7 +1447,7 @@ as reducedModulus E*, A, h_c </dd></dl>
 
 <hr class="footer"/><address class="footer"><small>
 Copyright by Steffen Brinckmann
-<!--Generated on Wed May 27 2020 15:52:01 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
+<!--Generated on Tue Jun 23 2020 14:13:17 for ExperimetalMicromechanics by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13 -->
 </small></address>
