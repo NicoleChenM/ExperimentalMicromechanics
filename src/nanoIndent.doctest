@@ -36,7 +36,7 @@ in this code (any nanoindentation code), since the area function is unit-depende
      Time                           : tTotal
      X Position                     : xCoarse
      Y Position                     : yCoarse
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 Number Unloading segments 1
 >>> i.nuMat = 0.2
 >>> i.plot()                                        #doctest: +SKIP
@@ -89,7 +89,7 @@ compliance = 3,42 nm/mN.....t = Tip(compliance=3.42/1e3)
 >>> from nanoIndent import Tip, Indentation
 >>> i = Indentation("../Examples/Hysitron/RobinSteel0000LC.txt")      #tip data NOT stored in file
 Open Hysitron file: ../Examples/Hysitron/RobinSteel0000LC.txt
-**WARNING identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of unloadIdx: UNDESIRED
 Number Unloading segments 1
 >>> i.analyse()
 Number of unloading segments:1  Method:Method.ISO
@@ -132,6 +132,9 @@ Tagged  ['Test 025 Tagged']
 >>> i.plotTestingMethod()               #can be used for all        #doctest: +SKIP
 >>> i.plot()                            #CSM: no unloading is plotted    #doctest: +SKIP
 >>> i.calibrateStiffness(0.5,plot=False)
+The normalized slope of K^2/P is: -0.93 (Absolute value <1: ok)
+Optimal compliance 8.656954406324167e-06 um/mN
+
 \endverbatim
 - and repeat this for all sheets in the excel file, by executing i.nextTest and i.compareReadCalc again
 - Allow plotting in verifyReadCalc by omiting plot=False
@@ -210,7 +213,7 @@ One value has a negative difference in slope and is not dependable. Use plt.plot
 >>> from nanoIndent import Tip, Indentation
 >>> tip = Tip([2.4725e+001,4.7739e+002,-3.2229e+003,3.5580e+003,"iso" ], 1000.0/9176606.1886)
 >>> i = Indentation("../Examples/Agilent/ISO.xls", nuMat=0.2, tip=tip, verbose=1)
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 >>> i.plot()                                    #doctest: +SKIP
 >>> print("All tests remaining in file: ",i.testList)
 All tests remaining in file:  ['Test 024', 'Test 023', 'Test 022', 'Test 021', 'Test 020', 'Test 019', 'Test 018', 'Test 017', 'Test 016', 'Test 015', 'Test 014', 'Test 013', 'Test 012', 'Test 011', 'Test 010', 'Test 009', 'Test 008', 'Test 007', 'Test 006', 'Test 005', 'Test 004', 'Test 003', 'Test 002', 'Test 001']
@@ -222,20 +225,20 @@ Meta information {'Test': 25.0, 'Percent To Unload': 90, 'Surface Approach Veloc
 ...   if len(i.testList)==0:
 ...     break
 ...   success = i.nextAgilentTest()
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from front of loadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 >>> k2p = df['S_mN/um']**2/df['pMax_mN']
 >>> print('Mean and standard deviation:',round(np.mean(k2p)),round(np.std(k2p)))
 Mean and standard deviation: 2575.0 77.0
@@ -344,7 +347,7 @@ calculate depth, force and timeOnSample from raw data by identifying surface, dr
      Time                           : tTotal
      X Position                     : xCoarse
      Y Position                     : yCoarse
-**WARNING identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
+*WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 Number Unloading segments 1
 >>> i.tareDepthForce(compareRead=True)
 Drift rate: -0.396 nm/s

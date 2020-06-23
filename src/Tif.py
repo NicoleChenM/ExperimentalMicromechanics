@@ -388,8 +388,11 @@ class Tif:
     Automatically crop the bottom bar from the image. The top line croped is the line that only contains white pixel
     """
     lineAvg = np.sum(self.image, axis=1) /self.image.size[0]
-    firstWhite = np.where(lineAvg>254)[0][0]
-    self.crop(yMax=firstWhite)
+    try:
+      firstWhite = np.where(lineAvg>254)[0][0]
+      self.crop(yMax=firstWhite)
+    except: #nothing to crop
+      pass
     return
 
 
