@@ -1523,7 +1523,7 @@ class Indentation:
     result = lmfit.minimize(fitFunct, params)
     self.tip.compliance = result.params['compliance'].value
     if self.verbose>1:
-      print("Optimal compliance",self.tip.compliance,'um/mN')
+      print("Optimal compliance %5.2e um/mN" %self.tip.compliance)
     self.slope = 1./(1./self.slope-self.tip.compliance)
     self.h     = self.h - self.p*self.tip.compliance
     self.k2p   = self.slope**2 / self.p[self.valid]
