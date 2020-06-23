@@ -240,8 +240,8 @@ Meta information {'Test': 25.0, 'Percent To Unload': 90, 'Surface Approach Veloc
 *WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 *WARNING* identifyLoadHoldUnload: cut two from end of unloadIdx: UNDESIRED
 >>> k2p = df['S_mN/um']**2/df['pMax_mN']
->>> print('Mean and standard deviation:',round(np.mean(k2p)),round(np.std(k2p)))
-Mean and standard deviation: 2575.0 77.0
+>>> print('Mean and standard deviation:',int(round(np.mean(k2p))),int(round(np.std(k2p))))
+Mean and standard deviation: 2575 77
 
 \endverbatim
 For Copper the K2P value is ~2500GPa while for Fused silica it is ~660GPa.

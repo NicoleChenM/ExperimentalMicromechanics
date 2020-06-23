@@ -1520,7 +1520,7 @@ class Indentation:
       return error
     params = lmfit.Parameters()
     params.add('compliance', value=initCompliance)
-    result = lmfit.minimize(fitFunct, params, maxfev=1000)
+    result = lmfit.minimize(fitFunct, params)
     self.tip.compliance = result.params['compliance'].value
     if self.verbose>1:
       print("Optimal compliance",self.tip.compliance,'um/mN')
