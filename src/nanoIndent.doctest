@@ -146,7 +146,7 @@ Use a zip file of multiple indentations
 \verbatim
 >>> from nanoIndent import Tip, Indentation
 >>> i = Indentation("../Examples/Micromaterials/multipleIndentations.zip", nuMat=0.17,verbose=1)
->>> i.calibration()                 #rounding differences can occur #doctest: +SKIP
+>>> res=i.calibration()                 #rounding differences can occur #doctest: +SKIP
 
 \endverbatim
 Typical values are:

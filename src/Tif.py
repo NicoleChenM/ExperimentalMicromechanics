@@ -3,7 +3,7 @@
 @file
 @brief Class to allow for Zeiss TIF image loading and enhancing using python
 """
-import logging, re, math, os, sys
+import logging, re, math, os, sys, warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import ndimage
@@ -72,7 +72,9 @@ class Tif:
     Init ZEISS file
     """
     logging.info("  Start initZeiss")
-    self.image     = Image.open(self.fileName).convert("L").convert("P")
+    with warnings.catch_warnings():
+      warnings.filterwarnings('ignore',category=ResourceWarning)  #Image open sometimes triggers "ResourceWarning"
+      self.image     = Image.open(self.fileName).convert("L").convert("P")
     self.origImage = self.image.copy()
 
     #parse for information
@@ -388,11 +390,9 @@ class Tif:
     Automatically crop the bottom bar from the image. The top line croped is the line that only contains white pixel
     """
     lineAvg = np.sum(self.image, axis=1) /self.image.size[0]
-    try:
-      firstWhite = np.where(lineAvg>254)[0][0]
-      self.crop(yMax=firstWhite)
-    except: #nothing to crop
-      pass
+    lineWhite = np.where(lineAvg>254)[0]
+    if len(lineWhite)>0:
+      self.crop(yMax=lineWhite[0])
     return
 
 

@@ -230,7 +230,7 @@ class Indentation:
       print("*ERROR* Should not land here: CSM method")
       return None,None,None,None
     if self.verbose>1: print("Number of unloading segments:"+str(len(self.iLHU))+"  Method:"+str(self.method))
-    S         = []
+    S, mask, opt = [], None, None
     maxDeltaP = -0.01
     t = self.t - np.min(self.t)  #undo resetting zero during init
     validMask = np.zeros_like(P, dtype=np.bool)
@@ -593,8 +593,12 @@ class Indentation:
       hist = ndimage.filters.gaussian_filter1d(hist,2)
     binCenter = (bins[1:]+bins[:-1])/2
     peaks = np.where(hist>10)[0]                  #peaks with more than 10 items
-    zeroID = np.argmin(np.abs(binCenter[peaks]))  #id which is closest to zero
-    zeroValue = binCenter[peaks][zeroID]
+    try:
+      zeroID = np.argmin(np.abs(binCenter[peaks]))  #id which is closest to zero
+      zeroValue = binCenter[peaks][zeroID]
+    except:
+      self.iLHU = []
+      return False
     ## Better algorithm: look for closest zero historgram-peak to zeroValue; take that to calculate delta
     zeroPeaks = np.logical_and(hist<0.3, binCenter<zeroValue)
     zeroPeaks = np.where(zeroPeaks)[0]
@@ -682,7 +686,7 @@ class Indentation:
     if iDriftS+1>iDriftE:
       iDriftS=iDriftE-1
     self.iDrift = [iDriftS,iDriftE]
-    return
+    return True
 
 
   def identifyLoadHoldUnloadCSM(self):
@@ -730,14 +734,15 @@ class Indentation:
     Wrapper for all next test for all vendors
     """
     if self.vendor == Vendor.Agilent:
-      self.nextAgilentTest()
+      success = self.nextAgilentTest()
     elif self.vendor == Vendor.Micromaterials:
-      self.nextMicromaterialsTest()
+      success = self.nextMicromaterialsTest()
     elif self.vendor == Vendor.FischerScope:
-      self.nextFischerScopeTest()
+      success = self.nextFischerScopeTest()
     else:
       print("No multiple tests in file")
-    return
+      success = False
+    return success
 
 
   def loadAgilent(self, fileName):
@@ -794,6 +799,7 @@ class Indentation:
     if not ("t" in self.indicies) or not ("p" in self.indicies) or \
        not ("h" in self.indicies) or not ("slope" in self.indicies)  :
           print("*WARNING*: INDENTATION: Some index is missing (t,p,h,slope) should be there")
+    self.meta['measurementType'] = 'MTS, Agilent Indentation XLS'
     self.nextAgilentTest()
     return True
 
@@ -846,8 +852,8 @@ class Indentation:
     if 'hRaw' in self.indicies        : self.hRaw /= 1.e3  #from nm in um
     if not "k2p" in self.indicies and 'slope' in self.indicies:
       self.k2p = self.slope * self.slope / self.p[self.valid]
-    self.identifyLoadHoldUnload()
-    return True
+    success = self.identifyLoadHoldUnload()
+    return success
 
 
   def loadHysitron(self, fileName, plotContact=False):
@@ -1203,6 +1209,7 @@ class Indentation:
   #@{
   def getDataframe(self):
     """
+    previous name: getResult
     save all results to dataframe variable for easy proccessing
     """
     dfAll = pd.DataFrame()
@@ -1380,6 +1387,7 @@ class Indentation:
         if not self.testList: break
         self.nextTest()
       mask = mask > critDepth
+      maskPrint = []
     else:
       ## create data-frame of all files
       dfAll = pd.DataFrame()
@@ -1388,6 +1396,12 @@ class Indentation:
         dfAll = dfAll.append(self.getDataframe())
         if not self.testList: break
         self.nextTest()
+      ## output representative values
+      res = {}
+      maskPrint = dfAll['pMax_mN'] > 0.95*np.max(dfAll['pMax_mN'])
+      res['Input Max force: ave,stderr'] = [dfAll['pMax_mN'][maskPrint].mean(),dfAll['pMax_mN'][maskPrint].std()/dfAll['pMax_mN'][maskPrint].count()]
+      res['Input Max depth: ave,stderr'] = [dfAll['hMax_um'][maskPrint].mean(),dfAll['hMax_um'][maskPrint].std()/dfAll['hMax_um'][maskPrint].count()]
+      res['Input MeasStiff: ave,stderr'] = [dfAll['S_mN/um'][maskPrint].mean(),dfAll['S_mN/um'][maskPrint].std()/dfAll['S_mN/um'][maskPrint].count()]
       ## determine compliance by intersection of 1/sqrt(p) -- compliance curve
       x = 1./np.sqrt(dfAll['pMax_mN'])
       y = 1./dfAll['S_mN/um']
@@ -1397,9 +1411,11 @@ class Indentation:
     print("fit f(x)=",round(param[0],5),"*x+",round(param[1],5))
     frameStiff = 1./param[1]
     frameCompliance = param[1]
-    print("  frame stiffness: %6.0f mN/um = %6.2e N/m"%(frameStiff,1000.*frameStiff))
+    print("  frame compliance: %8.4e um/mN = %8.4e m/N"%(frameCompliance,frameCompliance/1000.))
     stderrPercent = np.abs( np.sqrt(np.diag(covM)[1]) / param[1] * 100. )
-    print("  error in %:",round(stderrPercent,2) )
+    print("  compliance and stiffness standard error in %:",round(stderrPercent,2) )
+    res['Stiffness and error in %']=[frameStiff,stderrPercent]
+    print("  frame stiffness: %6.0f mN/um = %6.2e N/m"%(frameStiff,1000.*frameStiff))
     if plotStiffness:
       plt.plot(x, y, '.',label='all')
       plt.plot(x[mask], y[mask], '.',label='forFit')
@@ -1473,11 +1489,32 @@ class Indentation:
     print("iterated prefactors",[round(i,1) for i in self.tip.prefactors[:-1]])
     stderr = [result.params[x].stderr for x in result.params]
     print("  standard error",[round(x,2) for x in stderr])
+    res['tip prefact factors and std.error'] = [self.tip.prefactors[:-1],stderr]
 
     if plotTip:
       plt.plot(rNonPerfect, h_c,'.')
       self.tip.plotIndenterShape(maxDepth=1.5)
-    return
+
+    #rerun everything with calibrated area function to see
+    self.__init__(self.fileName, nuMat=self.nuMat, verbose=self.verbose, tip=self.tip)
+    if self.method!=Method.CSM:
+      ## create data-frame of all files
+      dfAll = pd.DataFrame()
+      while True:
+        self.analyse()
+        dfAll = dfAll.append(self.getDataframe())
+        if not self.testList: break
+        self.nextTest()
+      ## output representative values
+      maskPrint = dfAll['pMax_mN'] > 0.95*np.max(dfAll['pMax_mN'])
+      res['End Max depth: ave,stderr']=[dfAll['hMax_um'][maskPrint].mean(),dfAll['hMax_um'][maskPrint].std()/dfAll['hMax_um'][maskPrint].count()]
+      res['End MeasStiff: ave,stderr']=[dfAll['S_mN/um'][maskPrint].mean(),dfAll['S_mN/um'][maskPrint].std()/dfAll['S_mN/um'][maskPrint].count()]
+      res['End A_c: ave,stderr']=[      dfAll['A_um2'][maskPrint].mean(),  dfAll['A_um2'][maskPrint].std()/  dfAll['A_um2'][maskPrint].count()]
+      res['End h_c: ave,stderr']=[      dfAll['hc_um'][maskPrint].mean(),  dfAll['hc_um'][maskPrint].std()/  dfAll['hc_um'][maskPrint].count()]
+      res['End E: ave,stderr']=[  dfAll['E_GPa'].mean(),   dfAll['E_GPa'].std()/   dfAll['E_GPa'].count()]
+      res['End E_r: ave,stderr']=[dfAll['redE_GPa'].mean(),dfAll['redE_GPa'].std()/dfAll['redE_GPa'].count()]
+      res['End H: ave,stderr']=[  dfAll['H_GPa'].mean(),   dfAll['H_GPa'].std()/   dfAll['H_GPa'].count()]
+    return res
 
 
   def calibrateStiffness(self,fraction=0.5, initCompliance=0.0000001, plot=True):
