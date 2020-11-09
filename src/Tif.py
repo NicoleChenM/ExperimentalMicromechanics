@@ -86,6 +86,8 @@ class Tif:
           key = key.strip().replace(' ','_')
           value=value.strip()
           self.meta[key]=value
+          if key=='File_Name': #don't get confused by subsequent '='
+            break
 
     # meta data checks and handling
     valueArray = self.meta['Width'].split()

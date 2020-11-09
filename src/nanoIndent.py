@@ -254,7 +254,8 @@ class Indentation:
         if np.isnan(B):
           raise ValueError("NAN after fitting")
       except:
-        print("stiffnessFrommasking - Multi Unload - Fitting failed. use linear")
+        if self.verbose>1:
+          print("stiffnessFrommasking - Multi Unload - Fitting failed. use linear")
         B  = (P[mask][-1]-P[mask][0])/(h[mask][-1]-h[mask][0])
         hf = h[mask][0] -P[mask][0]/B
         m  = 1.
@@ -380,7 +381,7 @@ class Indentation:
         plt.axhline(eAve+eStd, color='k', linestyle='dashed')
         plt.axhline(eAve-eStd, color='k', linestyle='dashed')
         plt.ylim([eAve-4*eStd,eAve+4*eStd])
-      plt.xlabel('depth [$\mu m$]')
+      plt.xlabel(r'depth [$\mu m$]')
       plt.ylim(ymin=0)
       plt.ylabel('Youngs modulus [GPa]')
       plt.legend(loc=0)
@@ -409,8 +410,8 @@ class Indentation:
         plt.axhline(HAve, color='b')
         plt.axhline(HAve+HStd, color='b', linestyle='dashed')
         plt.axhline(HAve-HStd, color='b', linestyle='dashed')
-      plt.xlabel('depth [$\mu m$]')
-      plt.ylabel('hardness [GPa]')
+      plt.xlabel(r'depth [$\mu m$]')
+      plt.ylabel(r'hardness [$GPa$]')
       plt.legend(loc=0)
       plt.show()
     self.hardness = H
@@ -458,8 +459,8 @@ class Indentation:
       plt.plot(h,s2f, 'b-')
       s2fFit = np.polyval(prefactors,h)
       plt.plot(h, s2fFit, 'r-', lw=3)
-      plt.xlabel('depth [$\mu m$]')
-      plt.ylabel('stiffness2/force [$GPa$]')
+      plt.xlabel(r'depth [$\mu m$]')
+      plt.ylabel(r'stiffness2/force [$GPa$]')
       plt.show()
     return prefactors
 
@@ -513,9 +514,9 @@ class Indentation:
       ax1.axvline(0, linestyle='dashed', c='k')
       ax1.legend(loc=2)
       ax2.plot(self.t, self.pVsHSlope, "C2--", label='pVsHSlope')
-      ax1.set_xlabel("depth [$\mu m$]")
-      ax1.set_ylabel("force [$mN$]")
-      ax2.set_ylabel("depth [$mN/\mu m$]", color='C2')
+      ax1.set_xlabel(r"depth [$\mu m$]")
+      ax1.set_ylabel(r"force [$mN$]")
+      ax2.set_ylabel(r"depth [$mN/\mu m$]", color='C2')
       plt.show()
     #set newly obtained data
     self.h, self.p, self.t = h, p, t
@@ -1137,7 +1138,7 @@ class Indentation:
       self.meta['Indent_R'] = ' '.join( fIn.readline().split()[2:] )
       #read all lines after initial lines
       for line in fIn:
-        pattern = identifier+"   \d\d\.\d\d\.\d\d\d\d  \d\d:\d\d:\d\d"
+        pattern = identifier+r"   \d\d\.\d\d\.\d\d\d\d  \d\d:\d\d:\d\d"
         if re.match(pattern, line) is not None:
           ## finish old individual measurement
           if block is not None:
@@ -1171,7 +1172,7 @@ class Indentation:
         elif 'Epsilon =' in line:
           self.meta['epsilon'] += [float(line.split()[-1])]
           self.meta['fit range'] += [' '.join(line.split()[:-3])]
-        elif re.match('^\d+,\d+\s\d+,\d+\s\d+,\d+$', line):
+        elif re.match(r'^\d+,\d+\s\d+,\d+\s\d+,\d+$', line):
           line = line.replace(',','.').strip()
           block.append( [float(i) for i in line.split()] )
       ## add last dataframe
@@ -1265,9 +1266,9 @@ class Indentation:
     ax1.plot(self.t[self.iDrift], self.p[self.iDrift], 'k.')
     ax1.axhline(0,color='C0', linestyle='dashed')
     ax2.axhline(0,color='C1', linestyle='dashed')
-    ax1.set_xlabel("time [$s$]")
-    ax2.set_ylabel("depth [$\mu m$]", color='C1', fontsize=14)
-    ax1.set_ylabel("force [$mN$]", color='C0', fontsize=14)
+    ax1.set_xlabel(r"time [$s$]")
+    ax2.set_ylabel(r"depth [$\mu m$]", color='C1', fontsize=14)
+    ax1.set_ylabel(r"force [$mN$]", color='C0', fontsize=14)
     plt.grid()
     plt.show()
     return
@@ -1294,7 +1295,7 @@ class Indentation:
       h_, p_ = self.h[maskUnload], self.p[maskUnload]
       ax.plot(self.h[maskUnload], self.UnloadingPowerFunc(self.h[maskUnload],*optPar), 'C1', label='fit powerlaw' )
       ax.plot(self.h[self.valid],self.p[self.valid],"or",label="max", markersize=10)
-      ax.plot(self.h_c, np.zeros_like(self.h_c),"ob", label="h_c")
+      ax.plot(self.h_c, np.zeros_like(self.h_c),"ob", label="h_c", markersize=10)
       if len(self.h_c)<2:
         ax.plot(h_[0],p_[0],'og',)
         ax.plot(h_[-1],p_[-1],'og', label="fit domain")
@@ -1303,8 +1304,8 @@ class Indentation:
         ax.plot(h_,   self.slope*h_+Sn, 'r--', lw=2, label='stiffness')
       ax.legend(loc=0, numpoints=1)
     ax.set_xlim(left=-0.03)
-    ax.set_xlabel("depth [$\mu m$]")
-    ax.set_ylabel("force [$mN$]")
+    ax.set_xlabel(r"depth [$\mu m$]")
+    ax.set_ylabel(r"force [$mN$]")
     if saveFig:
       plt.savefig(self.fileName.split('.')[0]+".png", dpi=150, bbox_inches='tight')
     if show:
@@ -1341,17 +1342,17 @@ class Indentation:
       fit = np.polyfit(self.h[self.valid], self.k2p,1)
       plt.plot(self.h[self.valid], np.polyval(fit,self.h[self.valid]), 'C1-')
       plt.plot(self.h[self.valid], self.k2p, "C0o")
-      plt.ylabel("Stiffness Squared Over Load [GPa]")
+      plt.ylabel(r"Stiffness Squared Over Load [GPa]")
     elif property == "h_c":
       plt.plot(self.h[self.valid], self.h_c, "o")
-      plt.ylabel("Contact depth [$\mu m$]")
+      plt.ylabel(r"Contact depth [$\mu m$]")
     elif property == "A_c":
       plt.plot(self.h[self.valid], self.A_c, "o")
-      plt.ylabel("Contact area [$\mu m^2$]")
+      plt.ylabel(r"Contact area [$\mu m^2$]")
     else:
       print("Unknown property")
       return
-    plt.xlabel("depth "+r'$[\mu m]$')
+    plt.xlabel(r"depth "+r'$[\mu m]$')
     plt.show()
     return
 
@@ -1360,7 +1361,7 @@ class Indentation:
   ##
   # @name CALIBRATION METHOD
   #@{
-  def calibration(self,eTarget=72.0,numPolynomial=3,critDepth=1.0,plotStiffness=False,plotTip=False):
+  def calibration(self,eTarget=72.0,numPolynomial=3,critDepth=1.0,critForce=0.0,plotStiffness=False,plotTip=False):
     """
     Calibrate by first frame-stiffness and then area-function calibration
 
@@ -1369,68 +1370,11 @@ class Indentation:
        numPolynomial: number of area function polynomial
        critDepth: frame stiffness: what is the minimum depth of data used; area function: what is the maximum depth of data used
                   (if deep data is used for area function, this data can scew the area function)
+       critForce: frame stiffness: what is the minimum force used for fitting
        plotStiffness: plot stiffness graph with compliance
        pltTip: plot tip shape after fitting
     """
-    if self.method==Method.CSM:
-      x, y, mask = None, None, None
-      while True:
-        self.analyse()
-        if x is None:
-          x    = 1./np.sqrt(self.p[self.valid])
-          y    = 1./self.slope
-          mask = self.h[self.valid]
-        else:
-          x =    np.hstack((x,    1./np.sqrt(self.p[self.valid]) ))
-          y =    np.hstack((y,    1./self.slope))
-          mask = np.hstack((mask, self.h[self.valid]))
-        if not self.testList: break
-        self.nextTest()
-      mask = mask > critDepth
-      maskPrint = []
-    else:
-      ## create data-frame of all files
-      dfAll = pd.DataFrame()
-      while True:
-        self.analyse()
-        dfAll = dfAll.append(self.getDataframe())
-        if not self.testList: break
-        self.nextTest()
-      ## output representative values
-      res = {}
-      maskPrint = dfAll['pMax_mN'] > 0.95*np.max(dfAll['pMax_mN'])
-      res['Input Max force: ave,stderr'] = [dfAll['pMax_mN'][maskPrint].mean(),dfAll['pMax_mN'][maskPrint].std()/dfAll['pMax_mN'][maskPrint].count()]
-      res['Input Max depth: ave,stderr'] = [dfAll['hMax_um'][maskPrint].mean(),dfAll['hMax_um'][maskPrint].std()/dfAll['hMax_um'][maskPrint].count()]
-      res['Input MeasStiff: ave,stderr'] = [dfAll['S_mN/um'][maskPrint].mean(),dfAll['S_mN/um'][maskPrint].std()/dfAll['S_mN/um'][maskPrint].count()]
-      ## determine compliance by intersection of 1/sqrt(p) -- compliance curve
-      x = 1./np.sqrt(dfAll['pMax_mN'])
-      y = 1./dfAll['S_mN/um']
-      mask = dfAll['hMax_um'] > critDepth
-
-    param, covM = np.polyfit(x[mask],y[mask],1, cov=True)
-    print("fit f(x)=",round(param[0],5),"*x+",round(param[1],5))
-    frameStiff = 1./param[1]
-    frameCompliance = param[1]
-    print("  frame compliance: %8.4e um/mN = %8.4e m/N"%(frameCompliance,frameCompliance/1000.))
-    stderrPercent = np.abs( np.sqrt(np.diag(covM)[1]) / param[1] * 100. )
-    print("  compliance and stiffness standard error in %:",round(stderrPercent,2) )
-    res['Stiffness and error in %']=[frameStiff,stderrPercent]
-    print("  frame stiffness: %6.0f mN/um = %6.2e N/m"%(frameStiff,1000.*frameStiff))
-    if plotStiffness:
-      plt.plot(x, y, '.',label='all')
-      plt.plot(x[mask], y[mask], '.',label='forFit')
-      x_ = np.linspace(0, np.max(x)*1.1, 50)
-      y_ = np.polyval(param, x_)
-      plt.plot(x_,y_,'-')
-      plt.plot([0,np.min(x)/2],[frameCompliance,frameCompliance],'k')
-      plt.text(np.min(x)/2,frameCompliance,'machine compliance')
-      plt.xlabel("1/sqrt(p) [$mN^{-1/2}$]")
-      plt.ylabel("meas. compliance [$\mu m/mN$]")
-      plt.legend(loc=0)
-      plt.ylim([0,np.max(y[mask])*3])
-      plt.xlim([0,np.max(x[mask])*3])
-      plt.show()
-
+    frameCompliance = self.calibrateStiffness(critDepth=critDepth,critForce=critForce,plotStiffness=plotStiffness)
     ## re-create data-frame of all files
     self.__init__(self.fileName, nuMat=self.nuMat, verbose=self.verbose)
     self.tip.compliance = frameCompliance
@@ -1517,64 +1461,84 @@ class Indentation:
     return res
 
 
-  def calibrateStiffness(self,fraction=0.5, initCompliance=0.0000001, plot=True):
+  def calibrateStiffness(self,critDepth=1.0,critForce=0.0,plotStiffness=True, returnAxis=False):
     """
-    Calculate and calibrate stiffness from K^2/P of individual measurement.
-    Makes only sense if multiple unloadings exist in data
+    Calibrate by first frame-stiffness from K^2/P of individual measurement
 
     Args:
-      fraction: fraction to use for analysis (fraction=0.2 implies that from 20% of the max. depth to max. depth is used)
+       critDepth: frame stiffness: what is the minimum depth of data used
+       critForce: frame stiffness: what is the minimum force used for fitting
+       plotStiffness: plot stiffness graph with compliance
+       returnAxis: return axis of plot
     """
-    hMax, hMin = np.max(self.h[self.valid]), np.min(self.h[self.valid])
-    hThreshold = fraction*hMax + (1-fraction)*hMin
-    h          = self.h[self.valid][ self.h[self.valid]>hThreshold ]
-    k2p        = self.k2p[ self.h[self.valid]>hThreshold ]
-    k          = self.slope[ self.h[self.valid]>hThreshold ]
-    p          = self.p[self.valid][ self.h[self.valid]>hThreshold ]
-    fit        = np.polyfit(h,k2p,1)
-    if self.verbose>1:
-      print("The normalized slope of K^2/P is:",round(fit[0]/fit[1]*100,2), "(Absolute value <1: ok)" )
-    if plot:
-      x_ = np.linspace(hMin,hMax)
-      plt.plot(self.h[self.valid],self.k2p,c='C0',label='original')
-      plt.plot(h,k2p,'.',c='C1',label='fraction used')
-      plt.plot(x_, np.polyval(fit,x_),'--',c='C0')
+    if self.method==Method.CSM:
+      x, y, mask = None, None, None
+      while True:
+        self.analyse()
+        if x is None:
+          x    = 1./np.sqrt(self.p[self.valid])
+          y    = 1./self.slope
+          mask = self.h[self.valid]
+        else:
+          x =    np.hstack((x,    1./np.sqrt(self.p[self.valid]) ))
+          y =    np.hstack((y,    1./self.slope))
+          mask = np.hstack((mask, self.h[self.valid]))
+        if not self.testList: break
+        self.nextTest()
+      mask = mask > critDepth
+      maskPrint = []
+    else:
+      ## create data-frame of all files
+      dfAll = pd.DataFrame()
+      while True:
+        self.analyse()
+        dfAll = dfAll.append(self.getDataframe())
+        if not self.testList: break
+        self.nextTest()
+      ## output representative values
+      res = {}
+      maskPrint = dfAll['pMax_mN'] > 0.95*np.max(dfAll['pMax_mN'])
+      res['Input Max force: ave,stderr'] = [dfAll['pMax_mN'][maskPrint].mean(),dfAll['pMax_mN'][maskPrint].std()/dfAll['pMax_mN'][maskPrint].count()]
+      res['Input Max depth: ave,stderr'] = [dfAll['hMax_um'][maskPrint].mean(),dfAll['hMax_um'][maskPrint].std()/dfAll['hMax_um'][maskPrint].count()]
+      res['Input MeasStiff: ave,stderr'] = [dfAll['S_mN/um'][maskPrint].mean(),dfAll['S_mN/um'][maskPrint].std()/dfAll['S_mN/um'][maskPrint].count()]
+      ## determine compliance by intersection of 1/sqrt(p) -- compliance curve
+      x = 1./np.sqrt(dfAll['pMax_mN'])
+      y = 1./dfAll['S_mN/um']
+      mask = dfAll['hMax_um'] > critDepth
+      mask = np.logical_and(mask, dfAll['pMax_mN'] > critForce)
+    if(len(mask[mask])==0):
+      print("ERROR too much filtering, no data left. Decrease critForce and critDepth")
+      return None
 
-    # do fit, here with leastsq model
-    def fitFunct(params):     #error function
-      compliance = params['compliance'].value
-      if self.method == Method.CSM:
-        kContact = 1./(1./k-compliance) #mN/um
-        x = h - p*compliance
-        y = kContact**2/p
-      else:
-        self.tip.compliance = compliance
-        print("TODO code is missing")
-        aa=4/0
-      error = np.polyfit(x,y,1)[0]
-      # print("Used compliance, error",compliance,error)
-      if abs(error)<1e-6: error=0
-      return error
-    params = lmfit.Parameters()
-    params.add('compliance', value=initCompliance)
-    result = lmfit.minimize(fitFunct, params)
-    self.tip.compliance = result.params['compliance'].value
-    if self.verbose>1:
-      print("Optimal compliance %5.2e um/mN" %self.tip.compliance)
-    self.slope = 1./(1./self.slope-self.tip.compliance)
-    self.h     = self.h - self.p*self.tip.compliance
-    self.k2p   = self.slope**2 / self.p[self.valid]
-    if plot:
-      plt.plot(self.h[self.valid],self.k2p,c='C3',label='corrected')
-      h          = self.h[self.valid][ self.h[self.valid]>hThreshold ]
-      k2p        = self.k2p[ self.h[self.valid]>hThreshold ]
-      fit        = np.polyfit(h,k2p,1)
-      plt.plot(x_, np.polyval(fit,x_),'--',c='C3')
-      plt.xlabel('depth [$\mu m$]')
-      plt.ylabel('K2P [$GPa$]')
-      plt.legend(loc=0)
+    param, covM = np.polyfit(x[mask],y[mask],1, cov=True)
+    print("fit f(x)=",round(param[0],5),"*x+",round(param[1],5))
+    frameStiff = 1./param[1]
+    frameCompliance = param[1]
+    print("  frame compliance: %8.4e um/mN = %8.4e m/N"%(frameCompliance,frameCompliance/1000.))
+    stderrPercent = np.abs( np.sqrt(np.diag(covM)[1]) / param[1] * 100. )
+    print("  compliance and stiffness standard error in %:",round(stderrPercent,2) )
+    res['Stiffness and error in %']=[frameStiff,stderrPercent]
+    print("  frame stiffness: %6.0f mN/um = %6.2e N/m"%(frameStiff,1000.*frameStiff))
+    self.tip.compliance = frameCompliance
+
+    if plotStiffness:
+      f, ax = plt.subplots()
+      ax.plot(x, y, '.',label='all data')
+      ax.plot(x[mask], y[mask], '.',label='for fit')
+      x_ = np.linspace(0, np.max(x)*1.1, 50)
+      y_ = np.polyval(param, x_)
+      ax.plot(x_,y_,'-')
+      ax.plot([0,np.min(x)/2],[frameCompliance,frameCompliance],'k')
+      ax.text(np.min(x)/2,frameCompliance,'machine compliance')
+      ax.set_xlabel(r"1/sqrt(p) [$mN^{-1/2}$]")
+      ax.set_ylabel(r"meas. compliance [$\mu m/mN$]")
+      ax.legend(loc=4)
+      ax.set_ylim([0,np.max(y)*1.1])
+      ax.set_xlim([0,np.max(x)*1.1])
+      if returnAxis:
+        return ax
       plt.show()
-    return
+    return frameCompliance
 
 
   #@}
@@ -1856,8 +1820,8 @@ class Tip:
     plt.plot(rNonPerfect, h_c, '-', label=tipLabel)
     plt.plot(rPerfect,h_c, '-k', label='Berkovich')
     plt.legend(loc="best")
-    plt.ylabel('contact depth [$\mu m$]')
-    plt.xlabel('contact radius [$\mu m$]')
+    plt.ylabel(r'contact depth [$\mu m$]')
+    plt.xlabel(r'contact radius [$\mu m$]')
     plt.xlim([0,maxDepth*4./3./zoom])
     plt.ylim([0,maxDepth/zoom])
     if show:
