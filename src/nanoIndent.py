@@ -1452,6 +1452,7 @@ class Indentation:
     #calculate shape function as interpolation of 30 points (log-spacing)
     #  first calculate the  savgol-average using a adaptive window-size
     if numPolynomial is None:
+      # use interpolation function using random points
       data = np.vstack((h_c,A))
       data = data[:, data[0].argsort()]
       windowSize = int(len(A)/20) if int(len(A)/20)%2==1 else int(len(A)/20)-1
@@ -1461,7 +1462,6 @@ class Indentation:
       A_c_ = interpolationFunct(h_c_)
       interpolationFunct = interpolate.interp1d(h_c_, A_c_)
       del output, data
-
     else:
       #It is possible to crop only interesting contact depth: h_c>1nm
       # A = A[h_c>0.001]
@@ -1493,11 +1493,20 @@ class Indentation:
       res['tip prefact factors and std.error'] = [self.tip.prefactors[:-1],stderr]
 
     if plotTip:
-      rNonPerfect = np.sqrt(A/np.pi)
-      plt.plot(rNonPerfect, h_c,'.')
       if numPolynomial is None:
         self.tip.setInterpolationFunction(interpolationFunct)
+      rNonPerfect = np.sqrt(A/np.pi)
+      plt.plot(rNonPerfect, h_c,'.')
       self.tip.plotIndenterShape(maxDepth=1.5)
+      #Error plot
+      plt.plot(h_c,(A-self.tip.areaFunction(h_c))/A,'o',markersize=2)
+      plt.axhline(0,color='k',linewidth=2)
+      plt.xlabel("Depth [$\mu m$]")
+      plt.ylabel("Relative area error")
+      plt.ylim([-0.1,0.1])
+      plt.xlim(left=0)
+      plt.yticks([-0.1,-0.05,0,0.05,0.1])
+      plt.show()
 
     #rerun everything with calibrated area function to see
     self.__init__(self.fileName, nuMat=self.nuMat, verbose=self.verbose, tip=self.tip)
@@ -1577,7 +1586,7 @@ class Indentation:
       print("ERROR too much filtering, no data left. Decrease critForce and critDepth")
       return None
 
-    param, covM = np.polyfit(x[mask],y[mask],1, cov=True, w=1/(x[mask])**2)
+    param, covM = np.polyfit(x[mask],y[mask],1, cov=True)
     print("fit f(x)=",round(param[0],5),"*x+",round(param[1],5))
     frameStiff = 1./param[1]
     frameCompliance = param[1]
