@@ -232,14 +232,14 @@ class Indentation:
     S, mask, opt, powerlawFit = [], None, None, []
     maxDeltaP = -0.01
     t = self.t - np.min(self.t)  #undo resetting zero during init
-    validMask = np.zeros_like(P, dtype=np.bool)
+    validMask = np.zeros_like(P, dtype=bool)
     if plot:
       plt.plot(h,P,'-k')
     for cycleNum, cycle in enumerate(self.iLHU):
       loadStart, loadEnd, unloadStart, unloadEnd = cycle
       if loadStart>loadEnd or loadEnd>unloadStart or unloadStart>unloadEnd:
         print('*ERROR* stiffnessFromUnloading: indicies not in order:',cycle)
-      maskSegment = np.zeros_like(h, dtype=np.bool)
+      maskSegment = np.zeros_like(h, dtype=bool)
       maskSegment[unloadStart:unloadEnd+1] = True
       maskForce   = np.logical_and(P<P[loadEnd]*self.unloadPMax, P>P[loadEnd]*self.unloadPMin)
       mask        = np.logical_and(maskSegment,maskForce)
@@ -494,7 +494,7 @@ class Indentation:
     p = self.pRaw   - self.pRaw[iSurface]
     t = self.tTotal - self.tTotal[iSurface]
     h-= p/self.frameStiffness                               #compensate depth for instrument deflection
-    maskDrift = np.zeros_like(h, dtype=np.bool)
+    maskDrift = np.zeros_like(h, dtype=bool)
     maskDrift[self.iDrift[0]:self.iDrift[1]]   =  True
     tMiddle = (t[self.iDrift[1]]+t[self.iDrift[0]])/2
     maskDrift = np.logical_and(maskDrift, t>=tMiddle)
@@ -1013,7 +1013,7 @@ class Indentation:
     hFraction    = (1.-fractionMinH)*self.h[idxMinH]+fractionMinH*self.h[idxMask]
     idxMask = np.argmin(np.abs(self.h-hFraction))
     if idxMask>2:
-      mask     = np.zeros_like(self.h, dtype=np.bool)
+      mask     = np.zeros_like(self.h, dtype=bool)
       mask[:idxMask] = True
       fit = np.polyfit(self.h[mask],self.p[mask],1)
       self.p -= np.polyval(fit,self.h)
@@ -1095,7 +1095,7 @@ class Indentation:
     self.t = dataTest[:,0]
     self.h = dataTest[:,1]/1.e3
     self.p = dataTest[:,2]
-    self.valid = np.ones_like(self.t, dtype=np.bool)
+    self.valid = np.ones_like(self.t, dtype=bool)
     #set unknown values
     forceTreshold = 0.25 #250uN
     self.identifyLoadHoldUnload()
@@ -1221,7 +1221,7 @@ class Indentation:
     self.t = np.array(df['t'])
     self.h = np.array(df['h'])
     self.p = np.array(df['F'])
-    self.valid = np.ones_like(self.t, dtype=np.bool)
+    self.valid = np.ones_like(self.t, dtype=bool)
     self.identifyLoadHoldUnload()
     return
 
